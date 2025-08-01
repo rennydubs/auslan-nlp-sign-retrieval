@@ -1,0 +1,19 @@
+english_word,gloss,category,media_path,definition
+hello,HELLO,greetings,media/videos/hello.mp4,A greeting gesture used to acknowledge someone
+goodbye,GOODBYE,greetings,media/videos/goodbye.mp4,A farewell gesture used when parting
+thank,THANK-YOU,greetings,media/videos/thank.mp4,Expression of gratitude
+help,HELP,assistance,media/videos/help.mp4,Request or offer assistance
+assist,ASSIST,assistance,media/videos/assist.mp4,To give aid or support to someone
+support,SUPPORT,assistance,media/videos/support.mp4,To provide help or encouragement
+go,GO,movement,media/videos/go.mp4,Movement away from current location
+come,COME,movement,media/videos/come.mp4,Movement toward current location
+walk,WALK,movement,media/videos/walk.mp4,Action of moving on foot
+run,RUN,movement,media/videos/run.mp4,Action of moving quickly on foot
+happy,HAPPY,emotions,media/videos/happy.mp4,Positive emotional state
+sad,SAD,emotions,media/videos/sad.mp4,Negative emotional state of sorrow
+angry,ANGRY,emotions,media/videos/angry.mp4,Negative emotional state of anger
+eat,EAT,consumption,media/videos/eat.mp4,Action of consuming food
+drink,DRINK,consumption,media/videos/drink.mp4,Action of consuming liquid
+big,BIG,size_quantity,media/videos/big.mp4,Large in size or amount
+small,SMALL,size_quantity,media/videos/small.mp4,Little in size or amount
+many,MANY,size_quantity,media/videos/many.mp4,A large number of items

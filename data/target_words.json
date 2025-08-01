@@ -1,0 +1,30 @@
+{
+  "target_words": [
+    {
+      "category": "greetings",
+      "words": ["hello", "goodbye", "thank"]
+    },
+    {
+      "category": "assistance", 
+      "words": ["help", "assist", "support"]
+    },
+    {
+      "category": "movement",
+      "words": ["go", "come", "walk", "run"]
+    },
+    {
+      "category": "emotions",
+      "words": ["happy", "sad", "angry"]
+    },
+    {
+      "category": "consumption",
+      "words": ["eat", "drink"]
+    },
+    {
+      "category": "size_quantity",
+      "words": ["big", "small", "many"]
+    }
+  ],
+  "total_words": 18,
+  "notes": "Selected for beginner-level Auslan learners across different semantic categories"
+}
