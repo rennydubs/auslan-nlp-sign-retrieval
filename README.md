@@ -30,6 +30,7 @@ capstone/
 ## Target Words (16 total)
 
 The project focuses on 16 common words across semantic categories:
+
 Greetings & Social Interaction: Hello, Good, Friend, Goodbye
 Actions/Verbs: Help, Go, Come, See, Speak, Buy, Eat, Walk
 Places/Objects: House, Toilet
