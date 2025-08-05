@@ -45,8 +45,8 @@ Thumbs.db
 *.pdf
 research_notes.txt
 
-# Large media files (track with Git LFS if needed)
-media/videos/*.mp4
+# Large media files (now tracked with Git LFS)
+# media/videos/*.mp4 - now tracked with LFS
 media/videos/*.avi
 media/images/*.png
 media/images/*.jpg
