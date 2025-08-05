@@ -35,6 +35,7 @@ capstone/
 
 ## Target Words (16 total)
 
+<<<<<<< HEAD
 The project focuses on 16 common words with their synonyms:
 - **happy** (glad, joyful, cheerful)
 - **help** (assist, aid, support)
@@ -52,6 +53,17 @@ The project focuses on 16 common words with their synonyms:
 - **hello** (hi, hey, greetings)
 - **toilet** (bathroom, restroom, washroom)
 - **goodbye** (bye, farewell, see you)
+=======
+The project focuses on 16 common words across semantic categories:
+
+Greetings & Social Interaction: Hello, Good, Friend, Goodbye
+
+Actions/Verbs: Help, Go, Come, See, Speak, Buy, Eat, Walk
+
+Places/Objects: House, Toilet
+
+Descriptive/Adjectives: Happy, Big
+>>>>>>> ad8e583bad0a1565806c6e3d01804a6201341922
 
 ## Technical Approach
 
@@ -61,22 +73,3 @@ The project focuses on 16 common words with their synonyms:
   - Exact match model
   - Rule-based synonym model
   - Semantic similarity model (DistilBERT embeddings)
-
-## Week 1 Deliverables (Current)
-
-- ✅ Repository initialization
-- ✅ Directory structure setup
-- ✅ Target word selection (18 words across 6 categories)
-- ✅ Initial GLOSS dictionary structure
-
-## Next Steps
-
-1. Download and organize Auslan sign media files
-2. Implement NLP preprocessing pipeline
-3. Develop matching algorithms
-4. Create evaluation framework
-
-## Author
-
-Oliver Dubois (14269359)  
-Supervisor: Thuy Pham
