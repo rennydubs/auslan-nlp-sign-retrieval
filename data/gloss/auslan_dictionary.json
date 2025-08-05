@@ -1,0 +1,200 @@
+{
+  "hello": {
+    "gloss": "HELLO",
+    "category": "greeting",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Open palm waved side to side at shoulder height",
+    "difficulty": "beginner",
+    "synonyms": ["hi", "greetings", "hey"]
+  },
+  "goodbye": {
+    "gloss": "GOODBYE",
+    "category": "greeting", 
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Hand waved palm facing away from body",
+    "difficulty": "beginner",
+    "synonyms": ["bye", "farewell", "see you later"]
+  },
+  "thank": {
+    "gloss": "THANK-YOU",
+    "category": "greeting",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg", 
+    "description": "Hand moves from chin outward toward recipient",
+    "difficulty": "beginner",
+    "synonyms": ["thanks", "appreciate", "grateful"]
+  },
+  "please": {
+    "gloss": "PLEASE",
+    "category": "greeting",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Open palm circled on chest area",
+    "difficulty": "beginner", 
+    "synonyms": ["kindly", "if you would"]
+  },
+  "eat": {
+    "gloss": "EAT",
+    "category": "basic_needs",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Fingers bunched together, moved to mouth repeatedly",
+    "difficulty": "beginner",
+    "synonyms": ["consume", "meal", "food", "dine"]
+  },
+  "drink": {
+    "gloss": "DRINK", 
+    "category": "basic_needs",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "C-hand shape moved to mouth, tilting motion",
+    "difficulty": "beginner",
+    "synonyms": ["beverage", "hydrate", "sip"]
+  },
+  "sleep": {
+    "gloss": "SLEEP",
+    "category": "basic_needs",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4", 
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Hand placed beside tilted head, eyes closed gesture",
+    "difficulty": "beginner",
+    "synonyms": ["rest", "nap", "slumber"]
+  },
+  "help": {
+    "gloss": "HELP",
+    "category": "basic_needs",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg", 
+    "description": "Flat hand supports fist of other hand, lifting motion",
+    "difficulty": "beginner",
+    "synonyms": ["assist", "aid", "support", "assistance"]
+  },
+  "go": {
+    "gloss": "GO",
+    "category": "actions",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Index finger points and moves away from body",
+    "difficulty": "beginner", 
+    "synonyms": ["leave", "depart", "move"]
+  },
+  "come": {
+    "gloss": "COME",
+    "category": "actions",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Index finger beckons toward body",
+    "difficulty": "beginner",
+    "synonyms": ["approach", "arrive", "toward"]
+  },
+  "sit": {
+    "gloss": "SIT",
+    "category": "actions", 
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Two fingers bent, placed on flat hand representing sitting",
+    "difficulty": "beginner",
+    "synonyms": ["seated", "chair"]
+  },
+  "stand": {
+    "gloss": "STAND",
+    "category": "actions",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Two fingers straight up on flat palm",
+    "difficulty": "beginner",
+    "synonyms": ["standing", "upright"]
+  },
+  "walk": {
+    "gloss": "WALK",
+    "category": "actions",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Two hands alternating forward stepping motion",
+    "difficulty": "beginner",
+    "synonyms": ["walking", "step", "stroll"]
+  },
+  "run": {
+    "gloss": "RUN",
+    "category": "actions",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "L-hands alternating quickly, bent finger running motion",
+    "difficulty": "beginner",
+    "synonyms": ["running", "jog", "sprint"]
+  },
+  "happy": {
+    "gloss": "HAPPY",
+    "category": "emotions",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Open hands move upward with bright facial expression",
+    "difficulty": "beginner",
+    "synonyms": ["glad", "joyful", "pleased", "content"]
+  },
+  "sad": {
+    "gloss": "SAD",
+    "category": "emotions",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Open hands move downward with sad facial expression",
+    "difficulty": "beginner",
+    "synonyms": ["unhappy", "upset", "depressed", "down"]
+  },
+  "angry": {
+    "gloss": "ANGRY",
+    "category": "emotions",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Claw hands pull down from face with angry expression",
+    "difficulty": "beginner",
+    "synonyms": ["mad", "furious", "upset", "annoyed"]
+  },
+  "mother": {
+    "gloss": "MOTHER",
+    "category": "family",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Thumb touches chin area",
+    "difficulty": "beginner",
+    "synonyms": ["mum", "mom", "mama"]
+  },
+  "father": {
+    "gloss": "FATHER",
+    "category": "family",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Thumb touches forehead area",
+    "difficulty": "beginner",
+    "synonyms": ["dad", "papa", "daddy"]
+  },
+  "family": {
+    "gloss": "FAMILY",
+    "category": "family",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "F-hands circle around each other",
+    "difficulty": "beginner",
+    "synonyms": ["relatives", "household", "kin"]
+  },
+  "today": {
+    "gloss": "TODAY",
+    "category": "time",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Flat hands move downward together in front of body",
+    "difficulty": "beginner",
+    "synonyms": ["now", "current day"]
+  },
+  "tomorrow": {
+    "gloss": "TOMORROW", 
+    "category": "time",
+    "video_url": "https://media.auslan.org.au/mp4video/definition_id_here.mp4",
+    "image_url": "https://media.auslan.org.au/images/definition_id_here.jpg",
+    "description": "Flat hand moves forward and down from body",
+    "difficulty": "beginner",
+    "synonyms": ["next day", "following day"]
+  }
+}
