@@ -1,30 +1,70 @@
 {
   "target_words": [
     {
-      "category": "greetings",
-      "words": ["hello", "goodbye", "thank"]
+      "word": "happy",
+      "synonyms": ["glad", "joyful", "cheerful"]
     },
     {
-      "category": "assistance", 
-      "words": ["help", "assist", "support"]
+      "word": "help",
+      "synonyms": ["assist", "aid", "support"]
     },
     {
-      "category": "movement",
-      "words": ["go", "come", "walk", "run"]
+      "word": "go",
+      "synonyms": ["leave", "depart", "proceed"]
     },
     {
-      "category": "emotions",
-      "words": ["happy", "sad", "angry"]
+      "word": "come",
+      "synonyms": ["arrive", "approach", "enter"]
     },
     {
-      "category": "consumption",
-      "words": ["eat", "drink"]
+      "word": "eat",
+      "synonyms": ["dine", "consume", "have a meal"]
     },
     {
-      "category": "size_quantity",
-      "words": ["big", "small", "many"]
+      "word": "house",
+      "synonyms": ["home", "residence", "dwelling"]
+    },
+    {
+      "word": "friend",
+      "synonyms": ["buddy", "pal", "companion"]
+    },
+    {
+      "word": "see",
+      "synonyms": ["look", "watch", "view"]
+    },
+    {
+      "word": "speak",
+      "synonyms": ["talk", "say", "converse"]
+    },
+    {
+      "word": "walk",
+      "synonyms": ["stroll", "hike", "move"]
+    },
+    {
+      "word": "big",
+      "synonyms": ["large", "huge", "enormous"]
+    },
+    {
+      "word": "buy",
+      "synonyms": ["purchase", "get", "acquire"]
+    },
+    {
+      "word": "good",
+      "synonyms": ["great", "nice", "excellent"]
+    },
+    {
+      "word": "hello",
+      "synonyms": ["hi", "hey", "greetings"]
+    },
+    {
+      "word": "toilet",
+      "synonyms": ["bathroom", "restroom", "washroom"]
+    },
+    {
+      "word": "goodbye",
+      "synonyms": ["bye", "farewell", "see you"]
     }
   ],
-  "total_words": 18,
-  "notes": "Selected for beginner-level Auslan learners across different semantic categories"
+  "total_words": 16,
+  "notes": "Selected for beginner-level Auslan learners with synonyms for improved search matching"
 }
