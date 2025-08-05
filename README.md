@@ -35,25 +35,6 @@ capstone/
 
 ## Target Words (16 total)
 
-<<<<<<< HEAD
-The project focuses on 16 common words with their synonyms:
-- **happy** (glad, joyful, cheerful)
-- **help** (assist, aid, support)
-- **go** (leave, depart, proceed)
-- **come** (arrive, approach, enter)
-- **eat** (dine, consume, have a meal)
-- **house** (home, residence, dwelling)
-- **friend** (buddy, pal, companion)
-- **see** (look, watch, view)
-- **speak** (talk, say, converse)
-- **walk** (stroll, hike, move)
-- **big** (large, huge, enormous)
-- **buy** (purchase, get, acquire)
-- **good** (great, nice, excellent)
-- **hello** (hi, hey, greetings)
-- **toilet** (bathroom, restroom, washroom)
-- **goodbye** (bye, farewell, see you)
-=======
 The project focuses on 16 common words across semantic categories:
 
 Greetings & Social Interaction: Hello, Good, Friend, Goodbye
@@ -63,7 +44,6 @@ Actions/Verbs: Help, Go, Come, See, Speak, Buy, Eat, Walk
 Places/Objects: House, Toilet
 
 Descriptive/Adjectives: Happy, Big
->>>>>>> ad8e583bad0a1565806c6e3d01804a6201341922
 
 ## Technical Approach
 
