@@ -15,27 +15,43 @@ How can natural language processing be effectively applied to retrieve and displ
 ```
 capstone/
 ├── data/
-│   ├── gloss/                 # GLOSS dictionary files
-│   ├── synonyms/              # Synonym mapping files
-│   └── target_words.json      # Selected target words for development
+│   ├── gloss/
+│   │   ├── auslan_dictionary.json    # Main Auslan dictionary with sign data
+│   │   └── initial_gloss_dictionary.csv
+│   ├── synonyms/
+│   │   └── synonym_mapping.json      # Synonym to primary word mappings
+│   └── target_words.json             # Target words with synonyms
 ├── media/
-│   ├── videos/                # Sign language video files
-│   └── images/                # Sign language image files
-├── src/                       # Source code
-├── tests/                     # Test files
-├── docs/                      # Documentation
+│   ├── videos/                       # Sign language video files
+│   └── images/                       # Sign language image files
+├── src/
+│   ├── preprocessing.py              # Text preprocessing and cleaning
+│   └── matcher.py                    # Sign matching algorithms
+├── tests/                            # Test files
+├── docs/                             # Documentation
+├── main.py                           # Main application entry point
 └── README.md
 ```
 
-## Target Words (18 total)
+## Target Words (16 total)
 
-The project focuses on 18 common words across semantic categories:
-- **Greetings**: hello, goodbye, thank, please
-- **Basic Needs**: eat, drink, sleep, help
-- **Actions**: go, come, sit, stand, walk, run
-- **Emotions**: happy, sad, angry
-- **Family**: mother, father, family
-- **Time**: today, tomorrow
+The project focuses on 16 common words with their synonyms:
+- **happy** (glad, joyful, cheerful)
+- **help** (assist, aid, support)
+- **go** (leave, depart, proceed)
+- **come** (arrive, approach, enter)
+- **eat** (dine, consume, have a meal)
+- **house** (home, residence, dwelling)
+- **friend** (buddy, pal, companion)
+- **see** (look, watch, view)
+- **speak** (talk, say, converse)
+- **walk** (stroll, hike, move)
+- **big** (large, huge, enormous)
+- **buy** (purchase, get, acquire)
+- **good** (great, nice, excellent)
+- **hello** (hi, hey, greetings)
+- **toilet** (bathroom, restroom, washroom)
+- **goodbye** (bye, farewell, see you)
 
 ## Technical Approach
 
