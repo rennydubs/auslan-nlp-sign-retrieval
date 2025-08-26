@@ -1,44 +1,76 @@
 {
   "target_words": [
     {
-      "word": "happy",
-      "synonyms": ["glad", "joyful", "cheerful"]
+      "word": "hello",
+      "synonyms": ["hi", "greetings", "hey"]
     },
     {
-      "word": "help",
-      "synonyms": ["assist", "aid", "support"]
+      "word": "goodbye",
+      "synonyms": ["bye", "farewell", "see you later"]
     },
     {
-      "word": "go",
-      "synonyms": ["leave", "depart", "proceed"]
+      "word": "thank",
+      "synonyms": ["thanks", "appreciate", "grateful"]
     },
     {
-      "word": "come",
-      "synonyms": ["arrive", "approach", "enter"]
+      "word": "please",
+      "synonyms": ["kindly", "if you would"]
     },
     {
       "word": "eat",
-      "synonyms": ["dine", "consume", "have a meal"]
+      "synonyms": ["consume", "meal", "food", "dine"]
     },
     {
-      "word": "house",
-      "synonyms": ["home", "residence", "dwelling"]
+      "word": "drink",
+      "synonyms": ["beverage", "hydrate", "sip"]
     },
     {
-      "word": "friend",
-      "synonyms": ["buddy", "pal", "companion"]
+      "word": "sleep",
+      "synonyms": ["rest", "nap", "slumber"]
     },
     {
-      "word": "see",
-      "synonyms": ["look", "watch", "view"]
+      "word": "help",
+      "synonyms": ["assist", "aid", "support", "assistance"]
     },
     {
-      "word": "speak",
-      "synonyms": ["talk", "say", "converse"]
+      "word": "go",
+      "synonyms": ["leave", "depart", "move"]
+    },
+    {
+      "word": "come",
+      "synonyms": ["approach", "arrive", "toward"]
+    },
+    {
+      "word": "sit",
+      "synonyms": ["seated", "chair"]
+    },
+    {
+      "word": "stand",
+      "synonyms": ["standing", "upright"]
     },
     {
       "word": "walk",
-      "synonyms": ["stroll", "hike", "move"]
+      "synonyms": ["walking", "step", "stroll"]
+    },
+    {
+      "word": "happy",
+      "synonyms": ["glad", "joyful", "pleased", "content"]
+    },
+    {
+      "word": "sad",
+      "synonyms": ["unhappy", "upset", "depressed", "down"]
+    },
+    {
+      "word": "angry",
+      "synonyms": ["mad", "furious", "upset", "annoyed"]
+    },
+    {
+      "word": "today",
+      "synonyms": ["now", "current day"]
+    },
+    {
+      "word": "tomorrow",
+      "synonyms": ["next day", "following day"]
     },
     {
       "word": "big",
@@ -46,25 +78,101 @@
     },
     {
       "word": "buy",
-      "synonyms": ["purchase", "get", "acquire"]
+      "synonyms": ["purchase", "acquire", "shop"]
+    },
+    {
+      "word": "friend",
+      "synonyms": ["buddy", "pal", "companion"]
     },
     {
       "word": "good",
-      "synonyms": ["great", "nice", "excellent"]
+      "synonyms": ["great", "excellent", "fine"]
     },
     {
-      "word": "hello",
-      "synonyms": ["hi", "hey", "greetings"]
+      "word": "house",
+      "synonyms": ["home", "residence", "building"]
+    },
+    {
+      "word": "see",
+      "synonyms": ["look", "watch", "observe"]
+    },
+    {
+      "word": "speak",
+      "synonyms": ["talk", "say", "communicate"]
     },
     {
       "word": "toilet",
-      "synonyms": ["bathroom", "restroom", "washroom"]
+      "synonyms": ["bathroom", "restroom", "loo"]
     },
     {
-      "word": "goodbye",
-      "synonyms": ["bye", "farewell", "see you"]
+      "word": "exercise",
+      "synonyms": ["workout", "fitness", "training", "physical activity"]
+    },
+    {
+      "word": "strong",
+      "synonyms": ["strength", "powerful", "muscular", "fit"]
+    },
+    {
+      "word": "muscle",
+      "synonyms": ["muscles", "bicep", "strength"]
+    },
+    {
+      "word": "weight",
+      "synonyms": ["weights", "dumbbell", "barbell"]
+    },
+    {
+      "word": "lift",
+      "synonyms": ["lifting", "raise", "hoist"]
+    },
+    {
+      "word": "stretch",
+      "synonyms": ["stretching", "extend", "flexibility"]
+    },
+    {
+      "word": "breathe",
+      "synonyms": ["breathing", "inhale", "exhale"]
+    },
+    {
+      "word": "rest",
+      "synonyms": ["break", "pause", "recover"]
+    },
+    {
+      "word": "chest",
+      "synonyms": ["pectorals", "pecs"]
+    },
+    {
+      "word": "back",
+      "synonyms": ["spine", "shoulders"]
+    },
+    {
+      "word": "legs",
+      "synonyms": ["leg", "thighs", "quads"]
+    },
+    {
+      "word": "arms",
+      "synonyms": ["arm", "biceps", "triceps"]
+    },
+    {
+      "word": "warm",
+      "synonyms": ["warm-up", "warmup", "prepare"]
+    },
+    {
+      "word": "cool",
+      "synonyms": ["cool-down", "cooldown", "recovery"]
+    },
+    {
+      "word": "run",
+      "synonyms": ["running", "jog", "sprint"]
+    },
+    {
+      "word": "bike",
+      "synonyms": ["bicycle", "cycling", "spin"]
+    },
+    {
+      "word": "water",
+      "synonyms": ["drink", "hydration", "fluid", "hydrate"]
     }
   ],
-  "total_words": 16,
-  "notes": "Selected for beginner-level Auslan learners with synonyms for improved search matching"
+  "total_words": 42,
+  "notes": "Complete vocabulary set including basic, emotional, fitness, and anatomical signs for comprehensive Auslan learning with synonyms for improved search matching"
 }

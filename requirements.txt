@@ -1,0 +1,5 @@
+numpy>=2.3
+nltk>=3.8.1
+flask>=3.0
+# Optional for semantic matching (install torch first per PyTorch instructions on Windows):
+# sentence-transformers>=3.0

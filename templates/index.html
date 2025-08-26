@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}Auslan Sign Retrieval - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="text-center mb-4">
+            <h1><i class="fas fa-hands"></i> Auslan Sign Retrieval System</h1>
+            <p class="lead">Enter text to find corresponding Auslan signs for fitness coaching</p>
+        </div>
+
+        <!-- Input Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="signForm">
+                    <div class="mb-3">
+                        <label for="textInput" class="form-label">Enter text to translate to Auslan signs:</label>
+                        <textarea class="form-control" id="textInput" rows="3" 
+                                placeholder="e.g., 'Warm up before lifting weights' or 'Let's exercise and build muscle strength'"
+                                required></textarea>
+                    </div>
+                    
+                    <!-- Options Panel -->
+                    <div class="option-panel">
+                        <h6><i class="fas fa-cog"></i> Processing Options</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="removeStops">
+                                    <label class="form-check-label" for="removeStops">
+                                        Remove stop words
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="useStemming">
+                                    <label class="form-check-label" for="useStemming">
+                                        Enable stemming
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="useSemantic" checked>
+                                    <label class="form-check-label" for="useSemantic">
+                                        Use semantic matching
+                                    </label>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="semanticThreshold" class="form-label">Semantic threshold: <span id="thresholdValue">0.6</span></label>
+                                    <input type="range" class="form-range" id="semanticThreshold" min="0.3" max="0.9" step="0.1" value="0.6">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-outline-secondary me-md-2" id="evaluateBtn">
+                            <i class="fas fa-chart-bar"></i> Run Evaluation
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="processBtn">
+                            <i class="fas fa-search"></i> Find Signs
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Processing...</span>
+            </div>
+            <p class="mt-2">Processing your text...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" style="display: none;">
+            <!-- Stats Card -->
+            <div class="stats-card">
+                <div class="row text-center">
+                    <div class="col-3">
+                        <h3 id="totalTokens">0</h3>
+                        <small>Total Words</small>
+                    </div>
+                    <div class="col-3">
+                        <h3 id="signsFound">0</h3>
+                        <small>Signs Found</small>
+                    </div>
+                    <div class="col-3">
+                        <h3 id="coverageRate">0%</h3>
+                        <small>Coverage</small>
+                    </div>
+                    <div class="col-3">
+                        <h3 id="processingTime">0ms</h3>
+                        <small>Process Time</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matched Signs -->
+            <div id="matchedSigns"></div>
+
+            <!-- Unmatched Words -->
+            <div id="unmatchedWords" style="display: none;">
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Unmatched Words:</h6>
+                    <p id="unmatchedList" class="mb-0"></p>
+                    <small class="text-muted">Consider adding these to the dictionary or using different words.</small>
+                </div>
+            </div>
+
+            <!-- Match Statistics -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6><i class="fas fa-chart-pie"></i> Match Statistics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h5 text-success" id="exactMatches">0</div>
+                                <small>Exact Matches</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h5 text-warning" id="synonymMatches">0</div>
+                                <small>Synonym Matches</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h5 text-info" id="semanticMatches">0</div>
+                                <small>Semantic Matches</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h5 text-danger" id="unmatchedCount">0</div>
+                                <small>Unmatched</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Examples -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6><i class="fas fa-lightbulb"></i> Quick Examples</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Fitness Instructions:</h6>
+                        <ul class="list-unstyled">
+                            <li><a href="#" class="example-link">Warm up before lifting weights</a></li>
+                            <li><a href="#" class="example-link">Focus on your chest and arms today</a></li>
+                            <li><a href="#" class="example-link">Remember to breathe during exercise</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Basic Conversations:</h6>
+                        <ul class="list-unstyled">
+                            <li><a href="#" class="example-link">Hello, how are you today?</a></li>
+                            <li><a href="#" class="example-link">I need help finding the toilet</a></li>
+                            <li><a href="#" class="example-link">Thank you and goodbye</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Update threshold display
+    $('#semanticThreshold').on('input', function() {
+        $('#thresholdValue').text($(this).val());
+    });
+
+    // Example links
+    $('.example-link').click(function(e) {
+        e.preventDefault();
+        $('#textInput').val($(this).text());
+    });
+
+    // Form submission
+    $('#signForm').submit(function(e) {
+        e.preventDefault();
+        processText();
+    });
+
+    // Evaluation button
+    $('#evaluateBtn').click(function() {
+        runEvaluation();
+    });
+
+    function processText() {
+        const text = $('#textInput').val().trim();
+        if (!text) return;
+
+        const options = {
+            remove_stops: $('#removeStops').is(':checked'),
+            use_semantic: $('#useSemantic').is(':checked'),
+            use_stemming: $('#useStemming').is(':checked'),
+            semantic_threshold: parseFloat($('#semanticThreshold').val())
+        };
+
+        $('#loading').show();
+        $('#results').hide();
+
+        const startTime = Date.now();
+
+        $.ajax({
+            url: '/api/process',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                text: text,
+                options: options
+            }),
+            success: function(data) {
+                const endTime = Date.now();
+                displayResults(data, endTime - startTime);
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.error || 'An error occurred';
+                alert('Error: ' + error);
+            },
+            complete: function() {
+                $('#loading').hide();
+            }
+        });
+    }
+
+    function displayResults(data, processingTime) {
+        // Update stats
+        $('#totalTokens').text(data.total_tokens);
+        $('#signsFound').text(data.signs_found);
+        $('#coverageRate').text((data.coverage_stats.coverage_rate * 100).toFixed(1) + '%');
+        $('#processingTime').text(processingTime + 'ms');
+
+        // Update match statistics
+        const stats = data.coverage_stats;
+        $('#exactMatches').text(stats.exact_matches);
+        $('#synonymMatches').text(stats.synonym_matches);
+        $('#semanticMatches').text(stats.semantic_matches);
+        $('#unmatchedCount').text(stats.unmatched_tokens);
+
+        // Display matched signs
+        const matchedContainer = $('#matchedSigns');
+        matchedContainer.empty();
+
+        if (data.successful_matches.length > 0) {
+            data.successful_matches.forEach(function(match, index) {
+                const card = createMatchCard(match, index + 1);
+                matchedContainer.append(card);
+            });
+        }
+
+        // Display unmatched words
+        if (data.failed_matches.length > 0) {
+            const unmatchedWords = data.failed_matches.map(m => m.word).join(', ');
+            $('#unmatchedList').text(unmatchedWords);
+            $('#unmatchedWords').show();
+        } else {
+            $('#unmatchedWords').hide();
+        }
+
+        $('#results').show();
+    }
+
+    function createMatchCard(match, index) {
+        const signData = match.sign_data;
+        const confidence = (match.confidence * 100).toFixed(1);
+        const confidenceClass = match.confidence >= 0.8 ? 'high' : match.confidence >= 0.6 ? 'medium' : 'low';
+        
+        let videoHtml = '';
+        if (signData && signData.video_url && signData.video_url.startsWith('media/')) {
+            videoHtml = `
+                <div class="video-container">
+                    <video controls>
+                        <source src="${signData.video_url}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="card match-card ${match.match_type}">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="card-title">
+                                ${index}. ${match.word.toUpperCase()}
+                                <span class="badge bg-secondary">${signData?.gloss || 'N/A'}</span>
+                            </h5>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-tag"></i> ${match.match_type.charAt(0).toUpperCase() + match.match_type.slice(1)} Match
+                                (${confidence}% confidence)
+                            </p>
+                            <div class="confidence-bar mb-2">
+                                <div class="confidence-fill ${confidenceClass}" style="width: ${confidence}%"></div>
+                            </div>
+                            <p class="card-text">${signData?.description || 'No description available'}</p>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-folder"></i> Category: ${signData?.category || 'N/A'}
+                                    </small>
+                                </div>
+                                <div class="col-sm-6">
+                                    ${signData?.synonyms ? `
+                                        <small class="text-muted">
+                                            <i class="fas fa-list"></i> Synonyms: ${signData.synonyms.slice(0, 3).join(', ')}
+                                        </small>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            ${videoHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function runEvaluation() {
+        $('#loading').show();
+        $('#results').hide();
+
+        const options = {
+            remove_stops: $('#removeStops').is(':checked'),
+            use_semantic: $('#useSemantic').is(':checked'),
+            use_stemming: $('#useStemming').is(':checked'),
+            semantic_threshold: parseFloat($('#semanticThreshold').val())
+        };
+
+        $.ajax({
+            url: '/api/evaluate',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                options: options
+            }),
+            success: function(data) {
+                alert(`Evaluation Complete!\nAverage Coverage: ${(data.average_coverage * 100).toFixed(1)}%\nTotal Tests: ${data.total_tests}`);
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.error || 'An error occurred';
+                alert('Error: ' + error);
+            },
+            complete: function() {
+                $('#loading').hide();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

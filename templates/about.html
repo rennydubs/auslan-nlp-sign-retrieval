@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}About - Auslan Sign Retrieval{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1><i class="fas fa-info-circle"></i> About Auslan Sign Retrieval System</h1>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Overview</h5>
+                <p class="card-text">
+                    The Auslan Sign Retrieval System is designed to help fitness coaches communicate 
+                    effectively with Deaf and hard-of-hearing clients by translating common fitness 
+                    instructions and conversations into Australian Sign Language (Auslan) signs.
+                </p>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Features</h5>
+                <ul>
+                    <li><strong>Multiple Matching Strategies:</strong>
+                        <ul>
+                            <li>Exact matching for direct word-to-sign correspondence</li>
+                            <li>Synonym matching for alternative word forms</li>
+                            <li>Semantic matching using AI for contextual understanding</li>
+                        </ul>
+                    </li>
+                    <li><strong>Fitness-Focused Vocabulary:</strong> Specialized dictionary covering exercise, anatomy, and training terminology</li>
+                    <li><strong>Video Integration:</strong> Direct links to sign demonstration videos</li>
+                    <li><strong>Flexible Processing:</strong> Options for stop word removal, stemming, and semantic threshold adjustment</li>
+                    <li><strong>Real-time Evaluation:</strong> Performance metrics and coverage statistics</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">How It Works</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>1. Text Processing</h6>
+                        <p>Input text is cleaned, tokenized, and optionally processed with stemming and stop word removal.</p>
+                        
+                        <h6>2. Multi-Strategy Matching</h6>
+                        <p>Each word is matched using exact, synonym, and semantic approaches in order of confidence.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>3. Sign Retrieval</h6>
+                        <p>Matched words are linked to their corresponding Auslan signs with video demonstrations.</p>
+                        
+                        <h6>4. Results Display</h6>
+                        <p>Results show match types, confidence levels, and comprehensive statistics.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Dictionary Statistics</h5>
+                <div id="dictionaryStats" class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Processing Options</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Remove Stop Words</h6>
+                        <p>Filters out common words (the, and, is, etc.) to focus on content words.</p>
+                        
+                        <h6>Enable Stemming</h6>
+                        <p>Reduces words to their root form (running → run) for better matching.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Semantic Matching</h6>
+                        <p>Uses AI to find similar meanings even when exact words don't match.</p>
+                        
+                        <h6>Semantic Threshold</h6>
+                        <p>Controls how similar meanings need to be for a match (0.3-0.9 range).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Technical Details</h5>
+                <ul>
+                    <li><strong>Backend:</strong> Python Flask with NLTK for text processing</li>
+                    <li><strong>AI Model:</strong> SentenceTransformers (all-MiniLM-L6-v2) for semantic matching</li>
+                    <li><strong>Dictionary:</strong> JSON-based with 42+ fitness and general Auslan signs</li>
+                    <li><strong>Frontend:</strong> Bootstrap 5 with jQuery for responsive interface</li>
+                    <li><strong>Video Support:</strong> MP4 video integration for sign demonstrations</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Load dictionary statistics
+    $.get('/api/dictionary', function(data) {
+        const statsHtml = `
+            <div class="row">
+                <div class="col-md-3">
+                    <h3 class="text-primary">${data.total_entries}</h3>
+                    <small>Total Entries</small>
+                </div>
+                <div class="col-md-3">
+                    <h3 class="text-success">${Object.keys(data.categories).length}</h3>
+                    <small>Categories</small>
+                </div>
+                <div class="col-md-3">
+                    <h3 class="text-info">${Object.keys(data.sample_entries).length}</h3>
+                    <small>Sample Entries</small>
+                </div>
+                <div class="col-md-3">
+                    <h3 class="text-warning">MP4</h3>
+                    <small>Video Format</small>
+                </div>
+            </div>
+            <div class="mt-3">
+                <h6>Categories:</h6>
+                <div class="row">
+                    ${Object.entries(data.categories).map(([cat, count]) => 
+                        `<div class="col-md-4"><span class="badge bg-secondary me-1">${cat}</span> ${count}</div>`
+                    ).join('')}
+                </div>
+            </div>
+        `;
+        $('#dictionaryStats').html(statsHtml);
+    }).fail(function() {
+        $('#dictionaryStats').html('<p class="text-danger">Failed to load dictionary statistics</p>');
+    });
+});
+</script>
+{% endblock %}
