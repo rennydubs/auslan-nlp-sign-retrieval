@@ -11,6 +11,8 @@ from typing import List, Dict, Any
 import re
 from src.preprocessing import TextPreprocessor
 from src.matcher import SignMatcher
+from src.phrase_matcher import IntelligentPhraseMatcher
+from src.nlp_features import EnhancedNLPProcessor
 
 class AuslanSignSystem:
     """
@@ -20,52 +22,160 @@ class AuslanSignSystem:
     def __init__(self):
         """Initialize the system with all components."""
         self.preprocessor = TextPreprocessor()
-        
+
         # Load data paths
         self.gloss_dict_path = "data/gloss/auslan_dictionary.json"
         self.target_words_path = "data/target_words.json"
-        
-        # Initialize matcher
-        self.matcher = SignMatcher(self.gloss_dict_path, self.target_words_path)
-        
-        print("Auslan Sign Retrieval System initialized successfully!")
+
+        # Initialize matchers with error handling
+        try:
+            self.matcher = SignMatcher(self.gloss_dict_path, self.target_words_path)
+            print("Basic matching engine loaded")
+        except Exception as e:
+            print(f"WARNING: Basic matcher failed to load: {e}")
+            self.matcher = None
+
+        try:
+            self.phrase_matcher = IntelligentPhraseMatcher(self.gloss_dict_path, self.target_words_path)
+            print("OK: Intelligent phrase matcher loaded")
+        except Exception as e:
+            print(f"WARNING:  Phrase matcher failed to load: {e}")
+            self.phrase_matcher = None
+
+        try:
+            self.nlp_processor = EnhancedNLPProcessor()
+            print("OK: Enhanced NLP processor loaded")
+        except Exception as e:
+            print(f"WARNING:  NLP processor failed to load: {e}")
+            self.nlp_processor = None
+
+        print(">> Auslan AI v2.0 initialized successfully!")
+
         if not hasattr(self.matcher, 'semantic_model') or self.matcher.semantic_model is None:
-            print("Note: Semantic matching not available. Install sentence-transformers for full functionality.")
+            print("WARNING:  Note: Semantic matching not available. Install sentence-transformers for full functionality.")
+        else:
+            print("OK: Semantic similarity (DistilBERT) available")
     
-    def process_input(self, text: str, remove_stops: bool = False, use_semantic: bool = True, semantic_threshold: float = 0.6, use_stemming: bool = False) -> Dict[str, Any]:
+    def process_input(self, text: str, remove_stops: bool = False, use_semantic: bool = True,
+                     semantic_threshold: float = 0.5, use_stemming: bool = False,
+                     use_intelligent_matching: bool = True) -> Dict[str, Any]:
         """
-        Process user input text and return sign retrieval results.
-        
+        Process user input text with enhanced NLP analysis and intelligent phrase matching.
+
         Args:
             text (str): User input text
             remove_stops (bool): Whether to remove stop words
             use_semantic (bool): Whether to use semantic matching
-            
+            semantic_threshold (float): Semantic similarity threshold
+            use_stemming (bool): Whether to use stemming
+            use_intelligent_matching (bool): Whether to use intelligent phrase matching
+
         Returns:
-            Dict[str, Any]: Processing results with matches and statistics
+            Dict[str, Any]: Enhanced processing results with NLP analysis
         """
-        # Preprocess the text
-        tokens = self.preprocessor.preprocess(text, remove_stops=remove_stops, use_stemming=use_stemming)
-        
-        # Match tokens to signs
-        match_results = self.matcher.match_tokens(tokens, use_semantic=use_semantic, threshold=semantic_threshold)
-        
-        # Get coverage statistics
-        coverage_stats = self.matcher.get_coverage_stats(tokens, use_semantic=use_semantic, threshold=semantic_threshold)
-        
-        # Organize successful matches
-        successful_matches = [result for result in match_results if result['match_type'] != 'no_match']
-        failed_matches = [result for result in match_results if result['match_type'] == 'no_match']
-        
-        return {
-            'original_text': text,
-            'processed_tokens': tokens,
-            'total_tokens': len(tokens),
-            'successful_matches': successful_matches,
-            'failed_matches': failed_matches,
-            'coverage_stats': coverage_stats,
-            'signs_found': len(successful_matches)
-        }
+        # Perform NLP analysis first (with fallback)
+        try:
+            nlp_analysis = self.nlp_processor.analyze_text(text) if self.nlp_processor else None
+        except Exception as e:
+            print(f"WARNING:  NLP analysis failed: {e}")
+            nlp_analysis = None
+
+        # Try intelligent matching first, fallback to basic matching
+        if use_intelligent_matching and self.phrase_matcher:
+            try:
+                # Use intelligent phrase matching
+                phrase_match = self.phrase_matcher.match_phrase_intelligently(
+                    text, use_semantic=use_semantic, threshold=semantic_threshold
+                )
+                successful_matches = phrase_match.matched_signs
+                failed_matches = []
+
+                # Calculate coverage
+                total_words = len(text.split())
+                signs_found = len(successful_matches)
+                coverage_rate = signs_found / total_words if total_words > 0 else 0
+
+                # Create enhanced coverage stats
+                coverage_stats = {
+                'coverage_rate': coverage_rate,
+                'exact_matches': sum(1 for m in successful_matches if m.get('match_type') == 'exact'),
+                'synonym_matches': sum(1 for m in successful_matches if m.get('match_type') == 'synonym'),
+                'semantic_matches': sum(1 for m in successful_matches if m.get('match_type') == 'semantic'),
+                'unmatched_tokens': total_words - signs_found,
+                'match_breakdown': {
+                    'exact': (sum(1 for m in successful_matches if m.get('match_type') == 'exact') / max(total_words, 1)),
+                    'synonym': (sum(1 for m in successful_matches if m.get('match_type') == 'synonym') / max(total_words, 1)),
+                    'semantic': (sum(1 for m in successful_matches if m.get('match_type') == 'semantic') / max(total_words, 1))
+                }
+                }
+
+                return {
+                    'original_text': text,
+                    'processed_tokens': text.split(),  # Simple tokenization for display
+                    'total_tokens': total_words,
+                    'successful_matches': successful_matches,
+                    'failed_matches': failed_matches,
+                    'coverage_stats': coverage_stats,
+                    'signs_found': signs_found,
+                    # Enhanced NLP results
+                    'nlp_analysis': {
+                        'sentiment': nlp_analysis.sentiment_label if nlp_analysis else 'neutral',
+                        'sentiment_score': nlp_analysis.sentiment_score if nlp_analysis else 0.0,
+                        'emotion': nlp_analysis.emotion if nlp_analysis else 'neutral',
+                        'intent': nlp_analysis.intent if nlp_analysis else 'statement',
+                        'entities': nlp_analysis.entities if nlp_analysis else [],
+                        'key_phrases': nlp_analysis.key_phrases if nlp_analysis else [],
+                        'formality': nlp_analysis.formality_level if nlp_analysis else 'neutral',
+                        'complexity': nlp_analysis.complexity_score if nlp_analysis else 0.5,
+                        'readability': nlp_analysis.readability_score if nlp_analysis else 0.5
+                    },
+                    'phrase_analysis': {
+                        'phrase_type': phrase_match.phrase_type,
+                        'overall_confidence': phrase_match.confidence,
+                        'grammar_structure': phrase_match.grammar_structure
+                    }
+                }
+            except Exception as e:
+                print(f"WARNING:  Intelligent phrase matching failed: {e}")
+                use_intelligent_matching = False
+
+        # Fallback to basic matching if intelligent matching failed or disabled
+        if not use_intelligent_matching or not self.phrase_matcher:
+            # Use original token-based matching
+            if self.matcher:
+                tokens = self.preprocessor.preprocess(text, remove_stops=remove_stops, use_stemming=use_stemming)
+                match_results = self.matcher.match_tokens(tokens, use_semantic=use_semantic, threshold=semantic_threshold)
+                coverage_stats = self.matcher.get_coverage_stats(tokens, use_semantic=use_semantic, threshold=semantic_threshold)
+
+                successful_matches = [result for result in match_results if result['match_type'] != 'no_match']
+                failed_matches = [result for result in match_results if result['match_type'] == 'no_match']
+            else:
+                # Even basic matcher failed
+                tokens = text.split()
+                successful_matches = []
+                failed_matches = []
+                coverage_stats = {'coverage_rate': 0, 'exact_matches': 0, 'synonym_matches': 0, 'semantic_matches': 0, 'unmatched_tokens': len(tokens), 'match_breakdown': {'exact': 0, 'synonym': 0, 'semantic': 0}}
+
+            return {
+                'original_text': text,
+                'processed_tokens': tokens,
+                'total_tokens': len(tokens),
+                'successful_matches': successful_matches,
+                'failed_matches': failed_matches,
+                'coverage_stats': coverage_stats,
+                'signs_found': len(successful_matches),
+                'nlp_analysis': {
+                    'sentiment': nlp_analysis.sentiment_label if nlp_analysis else 'neutral',
+                    'sentiment_score': nlp_analysis.sentiment_score if nlp_analysis else 0.0,
+                    'emotion': nlp_analysis.emotion if nlp_analysis else 'neutral',
+                    'intent': nlp_analysis.intent if nlp_analysis else 'statement',
+                    'entities': nlp_analysis.entities if nlp_analysis else [],
+                    'key_phrases': nlp_analysis.key_phrases if nlp_analysis else [],
+                    'formality': nlp_analysis.formality_level if nlp_analysis else 'neutral',
+                    'complexity': nlp_analysis.complexity_score if nlp_analysis else 0.5,
+                    'readability': nlp_analysis.readability_score if nlp_analysis else 0.5
+                }
+            }
     
     def display_results(self, results: Dict[str, Any]) -> None:
         """
@@ -82,6 +192,30 @@ class AuslanSignSystem:
         print(f"Total tokens: {results['total_tokens']}")
         print(f"Signs found: {results['signs_found']}")
         print(f"Coverage: {results['coverage_stats']['coverage_rate']:.1%}")
+
+        # Display NLP Analysis
+        if 'nlp_analysis' in results:
+            nlp = results['nlp_analysis']
+            print(f"\nAI NLP ANALYSIS:")
+            print(f"   Sentiment: {nlp['sentiment']} ({nlp['sentiment_score']:.2f})")
+            print(f"   Emotion: {nlp['emotion']}")
+            print(f"   Intent: {nlp['intent']}")
+            print(f"   Formality: {nlp['formality']}")
+
+            if nlp['entities']:
+                entity_strings = [f"{e['text']} ({e['label']})" for e in nlp['entities']]
+                print(f"   Entities: {', '.join(entity_strings)}")
+
+            if nlp['key_phrases']:
+                print(f"   Key phrases: {', '.join(nlp['key_phrases'][:3])}")
+
+        # Display Phrase Analysis if available
+        if 'phrase_analysis' in results:
+            phrase = results['phrase_analysis']
+            print(f"\nPHRASE PHRASE ANALYSIS:")
+            print(f"   Type: {phrase['phrase_type']}")
+            print(f"   Confidence: {phrase['overall_confidence']:.1%}")
+            print(f"   Grammar: {phrase['grammar_structure']}")
         
         if results['successful_matches']:
             print("\nMATCHED SIGNS:")

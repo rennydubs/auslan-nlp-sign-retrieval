@@ -1,5 +1,18 @@
+# Core dependencies
 numpy>=2.3
 nltk>=3.8.1
 flask>=3.0
-# Optional for semantic matching (install torch first per PyTorch instructions on Windows):
-# sentence-transformers>=3.0
+
+# Enhanced NLP and Transformer Models
+sentence-transformers>=3.0  # For semantic similarity (DistilBERT)
+transformers>=4.21.0        # For DistilBERT sentiment and RoBERTa emotion
+torch>=1.13.0              # PyTorch backend for transformers
+spacy>=3.4.0               # For NER, POS tagging, dependency parsing
+textblob>=0.17.1           # For basic sentiment analysis fallback
+
+# Model downloads (run after installation):
+# python -m spacy download en_core_web_sm
+# Models will auto-download on first use:
+# - distilbert-base-uncased-finetuned-sst-2-english (sentiment)
+# - j-hartmann/emotion-english-distilroberta-base (emotion)
+# - all-MiniLM-L6-v2 (semantic similarity)

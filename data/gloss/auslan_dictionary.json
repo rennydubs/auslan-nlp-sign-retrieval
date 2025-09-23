@@ -298,8 +298,36 @@
   "water": {
     "gloss": "WATER",
     "category": "fitness_health",
-    "video_url": "media/videos/water.mp4", 
+    "video_url": "media/videos/water.mp4",
     "description": "Motion to mouth indicating drinking",
     "synonyms": ["drink", "hydration", "fluid", "hydrate"]
+  },
+  "food": {
+    "gloss": "FOOD",
+    "category": "basic_needs",
+    "video_url": "media/videos/food.mp4",
+    "description": "Fingers bunched together moving to mouth, representing eating",
+    "synonyms": ["meal", "nutrition", "nourishment", "sustenance"]
+  },
+  "many": {
+    "gloss": "MANY",
+    "category": "descriptive",
+    "video_url": "media/videos/many.mp4",
+    "description": "Hands opening and closing repeatedly showing abundance",
+    "synonyms": ["lots", "plenty", "much", "numerous"]
+  },
+  "more": {
+    "gloss": "MORE",
+    "category": "descriptive",
+    "video_url": "media/videos/more.mp4",
+    "description": "Fingertips of both hands brought together repeatedly",
+    "synonyms": ["additional", "extra", "further", "increased"]
+  },
+  "time": {
+    "gloss": "TIME",
+    "category": "temporal",
+    "video_url": "media/videos/time.mp4",
+    "description": "Index finger tapping on wrist indicating watch/time",
+    "synonyms": ["clock", "hour", "moment", "duration"]
   }
 }

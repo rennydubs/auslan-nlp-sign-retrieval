@@ -34,7 +34,7 @@
     },
     {
       "word": "go",
-      "synonyms": ["leave", "depart", "move"]
+      "synonyms": ["leave", "depart", "move", "travel", "head", "proceed"]
     },
     {
       "word": "come",
@@ -102,7 +102,7 @@
     },
     {
       "word": "toilet",
-      "synonyms": ["bathroom", "restroom", "loo"]
+      "synonyms": ["bathroom", "restroom", "loo", "washroom", "wc", "lavatory"]
     },
     {
       "word": "exercise",
@@ -162,7 +162,7 @@
     },
     {
       "word": "run",
-      "synonyms": ["running", "jog", "sprint"]
+      "synonyms": ["running", "jog", "sprint", "jogging", "cardio"]
     },
     {
       "word": "bike",
@@ -171,8 +171,24 @@
     {
       "word": "water",
       "synonyms": ["drink", "hydration", "fluid", "hydrate"]
+    },
+    {
+      "word": "food",
+      "synonyms": ["meal", "nutrition", "nourishment", "sustenance"]
+    },
+    {
+      "word": "many",
+      "synonyms": ["lots", "plenty", "much", "numerous"]
+    },
+    {
+      "word": "more",
+      "synonyms": ["additional", "extra", "further", "increased"]
+    },
+    {
+      "word": "time",
+      "synonyms": ["clock", "hour", "moment", "duration"]
     }
   ],
-  "total_words": 42,
+  "total_words": 46,
   "notes": "Complete vocabulary set including basic, emotional, fitness, and anatomical signs for comprehensive Auslan learning with synonyms for improved search matching"
 }

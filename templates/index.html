@@ -46,9 +46,15 @@
                                         Use semantic matching
                                     </label>
                                 </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="useIntelligent" checked>
+                                    <label class="form-check-label" for="useIntelligent">
+                                        Use intelligent matching
+                                    </label>
+                                </div>
                                 <div class="mb-2">
-                                    <label for="semanticThreshold" class="form-label">Semantic threshold: <span id="thresholdValue">0.6</span></label>
-                                    <input type="range" class="form-range" id="semanticThreshold" min="0.3" max="0.9" step="0.1" value="0.6">
+                                    <label for="semanticThreshold" class="form-label">Semantic threshold: <span id="thresholdValue">0.5</span></label>
+                                    <input type="range" class="form-range" id="semanticThreshold" min="0.3" max="0.9" step="0.1" value="0.5">
                                 </div>
                             </div>
                         </div>
@@ -57,6 +63,9 @@
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <button type="button" class="btn btn-outline-secondary me-md-2" id="evaluateBtn">
                             <i class="fas fa-chart-bar"></i> Run Evaluation
+                        </button>
+                        <button type="button" class="btn btn-outline-info me-md-2" id="statusBtn">
+                            <i class="fas fa-info-circle"></i> AI Status
                         </button>
                         <button type="submit" class="btn btn-primary" id="processBtn">
                             <i class="fas fa-search"></i> Find Signs
@@ -184,10 +193,95 @@ $(document).ready(function() {
         $('#thresholdValue').text($(this).val());
     });
 
-    // Example links
-    $('.example-link').click(function(e) {
+    // Example buttons
+    $(document).on('click', '.example-btn', function(e) {
         e.preventDefault();
-        $('#textInput').val($(this).text());
+        const text = $(this).data('text');
+        $('#textInput').val(text).focus();
+        // Optional: auto-submit after a short delay
+        setTimeout(() => {
+            if ($('#textInput').val() === text) {
+                processText();
+            }
+        }, 500);
+    });
+
+    // Clear button
+    $('#clearBtn').click(function() {
+        $('#textInput').val('').focus();
+        $('#results').hide();
+        $('#searchSuggestions').hide();
+    });
+
+    // Random example button
+    $('#randomBtn').click(function() {
+        const examples = [
+            "Warm up before lifting weights",
+            "Focus on your chest and arms today",
+            "Remember to breathe during exercise",
+            "I need more time to rest",
+            "Hello, how are you today?",
+            "I need help finding the toilet",
+            "Thank you and goodbye",
+            "Let's eat good food together",
+            "Many people exercise to stay strong",
+            "Drink more water during workout time",
+            "I feel happy and strong today",
+            "Come help me lift these weights"
+        ];
+        const randomExample = examples[Math.floor(Math.random() * examples.length)];
+        $('#textInput').val(randomExample).focus();
+    });
+
+    // Search suggestions
+    const commonPhrases = [
+        "warm up", "cool down", "lift weights", "build muscle", "drink water",
+        "exercise time", "rest break", "stretch arms", "strong legs", "breathe deeply",
+        "many people", "more food", "good day", "help me", "thank you",
+        "hello friend", "goodbye see you", "happy today", "sad feeling"
+    ];
+
+    $('#textInput').on('input', function() {
+        const query = $(this).val().toLowerCase().trim();
+        const suggestions = $('#searchSuggestions');
+
+        if (query.length < 2) {
+            suggestions.hide();
+            return;
+        }
+
+        const matches = commonPhrases.filter(phrase =>
+            phrase.includes(query) || query.includes(phrase.split(' ')[0])
+        ).slice(0, 5);
+
+        if (matches.length > 0) {
+            const suggestionHtml = matches.map(phrase =>
+                `<div class="suggestion-item" data-text="${phrase}">
+                    <i class="fas fa-search me-2 text-muted"></i>${phrase}
+                </div>`
+            ).join('');
+
+            suggestions.html(suggestionHtml).show();
+        } else {
+            suggestions.hide();
+        }
+    });
+
+    // Handle suggestion clicks
+    $(document).on('click', '.suggestion-item', function() {
+        const text = $(this).data('text');
+        const currentText = $('#textInput').val();
+        const words = currentText.split(' ');
+        words[words.length - 1] = text;
+        $('#textInput').val(words.join(' ') + ' ').focus();
+        $('#searchSuggestions').hide();
+    });
+
+    // Hide suggestions when clicking outside
+    $(document).click(function(e) {
+        if (!$(e.target).closest('#textInput, #searchSuggestions').length) {
+            $('#searchSuggestions').hide();
+        }
     });
 
     // Form submission
@@ -201,6 +295,11 @@ $(document).ready(function() {
         runEvaluation();
     });
 
+    // AI Status button
+    $('#statusBtn').click(function() {
+        checkAIStatus();
+    });
+
     function processText() {
         const text = $('#textInput').val().trim();
         if (!text) return;
@@ -209,7 +308,8 @@ $(document).ready(function() {
             remove_stops: $('#removeStops').is(':checked'),
             use_semantic: $('#useSemantic').is(':checked'),
             use_stemming: $('#useStemming').is(':checked'),
-            semantic_threshold: parseFloat($('#semanticThreshold').val())
+            semantic_threshold: parseFloat($('#semanticThreshold').val()),
+            use_intelligent_matching: $('#useIntelligent').is(':checked')
         };
 
         $('#loading').show();
@@ -273,7 +373,134 @@ $(document).ready(function() {
             $('#unmatchedWords').hide();
         }
 
+        // Display NLP Analysis if available
+        if (data.nlp_analysis) {
+            displayNLPAnalysis(data.nlp_analysis);
+        }
+
+        // Display Phrase Analysis if available
+        if (data.phrase_analysis) {
+            displayPhraseAnalysis(data.phrase_analysis);
+        }
+
         $('#results').show();
+    }
+
+    function displayNLPAnalysis(nlp) {
+        // Create or update NLP analysis card
+        let nlpCard = $('#nlpAnalysis');
+        if (nlpCard.length === 0) {
+            const nlpHtml = `
+                <div class="card mt-3" id="nlpAnalysis">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0"><i class="fas fa-brain me-2"></i>AI Analysis</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <strong>Sentiment:</strong>
+                                    <span id="sentimentLabel" class="badge"></span>
+                                    <span id="sentimentScore" class="text-muted"></span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Emotion:</strong>
+                                    <span id="emotionLabel" class="badge bg-warning"></span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Intent:</strong>
+                                    <span id="intentLabel" class="badge bg-secondary"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <strong>Formality:</strong>
+                                    <span id="formalityLabel" class="badge bg-light text-dark"></span>
+                                </div>
+                                <div class="mb-2" id="entitiesDiv" style="display: none;">
+                                    <strong>Entities:</strong>
+                                    <span id="entitiesList"></span>
+                                </div>
+                                <div class="mb-2" id="phrasesDiv" style="display: none;">
+                                    <strong>Key Phrases:</strong>
+                                    <span id="phrasesList" class="text-muted"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#results').prepend(nlpHtml);
+        }
+
+        // Update sentiment
+        const sentimentClass = nlp.sentiment === 'positive' ? 'bg-success' :
+                              nlp.sentiment === 'negative' ? 'bg-danger' : 'bg-secondary';
+        $('#sentimentLabel').attr('class', `badge ${sentimentClass}`).text(nlp.sentiment);
+        $('#sentimentScore').text(`(${nlp.sentiment_score.toFixed(2)})`);
+
+        // Update emotion
+        $('#emotionLabel').text(nlp.emotion);
+
+        // Update intent
+        $('#intentLabel').text(nlp.intent);
+
+        // Update formality
+        $('#formalityLabel').text(nlp.formality);
+
+        // Update entities if available
+        if (nlp.entities && nlp.entities.length > 0) {
+            const entityBadges = nlp.entities.map(e =>
+                `<span class="badge bg-primary me-1">${e.text} (${e.label})</span>`
+            ).join('');
+            $('#entitiesList').html(entityBadges);
+            $('#entitiesDiv').show();
+        } else {
+            $('#entitiesDiv').hide();
+        }
+
+        // Update key phrases if available
+        if (nlp.key_phrases && nlp.key_phrases.length > 0) {
+            $('#phrasesList').text(nlp.key_phrases.slice(0, 3).join(', '));
+            $('#phrasesDiv').show();
+        } else {
+            $('#phrasesDiv').hide();
+        }
+    }
+
+    function displayPhraseAnalysis(phrase) {
+        // Create or update phrase analysis card
+        let phraseCard = $('#phraseAnalysis');
+        if (phraseCard.length === 0) {
+            const phraseHtml = `
+                <div class="card mt-3" id="phraseAnalysis">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="fas fa-comments me-2"></i>Phrase Analysis</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>Type:</strong>
+                                <span id="phraseType" class="badge bg-primary"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Confidence:</strong>
+                                <span id="phraseConfidence" class="badge bg-info"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Grammar:</strong>
+                                <span id="grammarStructure" class="text-muted small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#results').prepend(phraseHtml);
+        }
+
+        $('#phraseType').text(phrase.phrase_type);
+        $('#phraseConfidence').text(`${(phrase.overall_confidence * 100).toFixed(1)}%`);
+        $('#grammarStructure').text(phrase.grammar_structure);
     }
 
     function createMatchCard(match, index) {
@@ -342,7 +569,8 @@ $(document).ready(function() {
             remove_stops: $('#removeStops').is(':checked'),
             use_semantic: $('#useSemantic').is(':checked'),
             use_stemming: $('#useStemming').is(':checked'),
-            semantic_threshold: parseFloat($('#semanticThreshold').val())
+            semantic_threshold: parseFloat($('#semanticThreshold').val()),
+            use_intelligent_matching: $('#useIntelligent').is(':checked')
         };
 
         $.ajax({
@@ -364,6 +592,157 @@ $(document).ready(function() {
             }
         });
     }
+
+    function checkAIStatus() {
+        $.ajax({
+            url: '/api/models/status',
+            method: 'GET',
+            success: function(data) {
+                displayAIStatus(data);
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.error || 'Failed to check AI status';
+                alert('Error: ' + error);
+            }
+        });
+    }
+
+    function displayAIStatus(status) {
+        const modal = `
+            <div class="modal fade" id="aiStatusModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-info text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-robot me-2"></i>AI Model Status
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6>Core System</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-circle ${status.spacy_available ? 'text-success' : 'text-danger'}"></i> spaCy NLP: ${status.spacy_available ? 'Available' : 'Not Available'}</li>
+                                        <li><i class="fas fa-circle ${status.intelligent_matching_available ? 'text-success' : 'text-danger'}"></i> Intelligent Matching: ${status.intelligent_matching_available ? 'Available' : 'Not Available'}</li>
+                                        <li><i class="fas fa-circle text-success"></i> Total Signs: ${status.total_signs}</li>
+                                    </ul>
+
+                                    <h6>AI Models</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-circle ${status.semantic_model_available ? 'text-success' : 'text-danger'}"></i> Semantic Similarity: ${status.semantic_model_available ? 'Available' : 'Not Available'}</li>
+                                        <li><i class="fas fa-circle ${status.sentiment_model_available ? 'text-success' : 'text-danger'}"></i> DistilBERT Sentiment: ${status.sentiment_model_available ? 'Available' : 'Not Available'}</li>
+                                        <li><i class="fas fa-circle ${status.emotion_model_available ? 'text-success' : 'text-danger'}"></i> RoBERTa Emotion: ${status.emotion_model_available ? 'Available' : 'Not Available'}</li>
+                                    </ul>
+
+                                    <div class="alert alert-info">
+                                        <strong>System Version:</strong> ${status.system_version}<br>
+                                        <strong>Recommendation:</strong> ${getRecommendation(status)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        $('#aiStatusModal').remove();
+
+        // Add new modal and show it
+        $('body').append(modal);
+        $('#aiStatusModal').modal('show');
+    }
+
+    function getRecommendation(status) {
+        const issues = [];
+        if (!status.spacy_available) issues.push('Install spaCy');
+        if (!status.semantic_model_available) issues.push('Install sentence-transformers');
+        if (!status.sentiment_model_available) issues.push('Check transformers installation');
+        if (!status.emotion_model_available) issues.push('Emotion model loading failed');
+
+        if (issues.length === 0) {
+            return 'All AI features are working perfectly! 🎉';
+        } else {
+            return 'Some AI features are disabled. ' + issues.join(', ') + '.';
+        }
+    }
+});
+
+// Video control functions
+function toggleVideo(videoId) {
+    const video = document.getElementById(videoId);
+    const icon = document.getElementById(`icon_${videoId}`);
+
+    if (video.paused) {
+        video.play();
+        icon.className = 'fas fa-pause';
+    } else {
+        video.pause();
+        icon.className = 'fas fa-play';
+    }
+}
+
+function restartVideo(videoId) {
+    const video = document.getElementById(videoId);
+    video.currentTime = 0;
+    if (!video.paused) {
+        video.play();
+    }
+}
+
+function toggleMute(videoId) {
+    const video = document.getElementById(videoId);
+    const icon = document.getElementById(`mute_${videoId}`);
+
+    video.muted = !video.muted;
+    icon.className = video.muted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+}
+
+function playAllVideos() {
+    const videos = document.querySelectorAll('.sign-video');
+    videos.forEach((video, index) => {
+        setTimeout(() => {
+            video.currentTime = 0;
+            video.play();
+        }, index * 1000); // Stagger playback by 1 second
+    });
+}
+
+// Add video event listeners when videos are loaded
+$(document).on('loadedmetadata', '.sign-video', function() {
+    const video = this;
+    const videoId = video.id;
+    const icon = document.getElementById(`icon_${videoId}`);
+
+    video.addEventListener('ended', function() {
+        icon.className = 'fas fa-play';
+    });
+
+    video.addEventListener('play', function() {
+        icon.className = 'fas fa-pause';
+    });
+
+    video.addEventListener('pause', function() {
+        icon.className = 'fas fa-play';
+    });
+});
+
+// Add smooth animations
+$(document).ready(function() {
+    // Animate stats cards
+    $('#results').on('show', function() {
+        $('.stats-card').addClass('fade-in');
+        $('.match-card').each(function(index) {
+            $(this).delay(index * 100).queue(function() {
+                $(this).addClass('fade-in').dequeue();
+            });
+        });
+    });
 });
 </script>
 {% endblock %}

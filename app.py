@@ -42,16 +42,18 @@ def process_text():
         remove_stops = options.get('remove_stops', False)
         use_semantic = options.get('use_semantic', True)
         use_stemming = options.get('use_stemming', False)
-        semantic_threshold = options.get('semantic_threshold', 0.6)
-        
-        # Process the text
+        semantic_threshold = options.get('semantic_threshold', 0.5)
+        use_intelligent_matching = options.get('use_intelligent_matching', True)
+
+        # Process the text with enhanced features
         system = get_sign_system()
         results = system.process_input(
             text,
             remove_stops=remove_stops,
             use_semantic=use_semantic,
             semantic_threshold=semantic_threshold,
-            use_stemming=use_stemming
+            use_stemming=use_stemming,
+            use_intelligent_matching=use_intelligent_matching
         )
         
         # Add processing timestamp
@@ -84,7 +86,7 @@ def evaluate_system():
         remove_stops = options.get('remove_stops', False)
         use_semantic = options.get('use_semantic', True)
         use_stemming = options.get('use_stemming', False)
-        semantic_threshold = options.get('semantic_threshold', 0.6)
+        semantic_threshold = options.get('semantic_threshold', 0.5)
         
         # Run evaluation
         system = get_sign_system()
@@ -134,6 +136,81 @@ def get_dictionary():
         
         return jsonify(dictionary_info)
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analyze', methods=['POST'])
+def analyze_text():
+    """API endpoint for detailed NLP analysis."""
+    try:
+        data = request.get_json()
+        text = data.get('text', '').strip()
+
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+
+        system = get_sign_system()
+        analysis = system.nlp_processor.analyze_text(text)
+
+        return jsonify({
+            'text': text,
+            'sentiment': {
+                'label': analysis.sentiment_label,
+                'score': analysis.sentiment_score,
+                'confidence': analysis.confidence
+            },
+            'emotion': analysis.emotion,
+            'intent': analysis.intent,
+            'entities': analysis.entities,
+            'key_phrases': analysis.key_phrases,
+            'formality': analysis.formality_level,
+            'complexity': analysis.complexity_score,
+            'readability': analysis.readability_score,
+            'analyzed_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/suggestions', methods=['POST'])
+def get_suggestions():
+    """API endpoint for intelligent phrase suggestions."""
+    try:
+        data = request.get_json()
+        partial_text = data.get('text', '').strip()
+
+        if len(partial_text) < 2:
+            return jsonify({'suggestions': []})
+
+        system = get_sign_system()
+        suggestions = system.phrase_matcher.get_phrase_suggestions(partial_text, limit=8)
+
+        return jsonify({
+            'partial_text': partial_text,
+            'suggestions': suggestions
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/models/status')
+def model_status():
+    """API endpoint to check which AI models are available."""
+    try:
+        system = get_sign_system()
+
+        status = {
+            'spacy_available': system.nlp_processor.nlp is not None,
+            'semantic_model_available': hasattr(system.matcher, 'semantic_model') and system.matcher.semantic_model is not None,
+            'sentiment_model_available': system.nlp_processor.sentiment_model is not None,
+            'emotion_model_available': system.nlp_processor.emotion_model is not None,
+            'intelligent_matching_available': True,
+            'total_signs': len(system.matcher.gloss_dict),
+            'system_version': '2.0'
+        }
+
+        return jsonify(status)
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
