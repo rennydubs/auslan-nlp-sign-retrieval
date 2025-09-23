@@ -1,10 +1,8 @@
-# 🤖 Auslan AI - Advanced NLP-Powered Sign Retrieval System
-
-**v2.0** - A cutting-edge text-to-Auslan translation tool using state-of-the-art NLP and transformer models.
+# NLP-Powered Sign Retrieval System
 
 ## 🚀 Project Overview
 
-This advanced system leverages modern AI and transformer models to provide intelligent Auslan sign retrieval with deep natural language understanding. Features include sentiment analysis, emotion detection, intelligent phrase matching, and context-aware sign selection.
+This system leverages modern transformer models to provide intelligent Auslan sign retrieval with deep natural language understanding. Features include sentiment analysis, emotion detection, intelligent phrase matching, and context-aware sign selection.
 
 ### ✨ Key Features
 
