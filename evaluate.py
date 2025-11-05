@@ -28,17 +28,19 @@ def parse_flags(argv):
                         help='Semantic matching threshold (0.0-1.0)')
     parser.add_argument('--export', type=str, default=None,
                         help='Export results to JSON file (e.g., results.json)')
+    parser.add_argument('--no-synonym', action='store_true',
+                        help='Disable synonym and phrase-based matching')
 
     args = parser.parse_args(argv)
 
-    return args.no_stops, not args.no_semantic, args.thresh, args.stem, args.export
+    return args.no_stops, not args.no_semantic, args.thresh, args.stem, args.export, not args.no_synonym
 
 
 def run_evaluation(argv=None):
     """Run comprehensive evaluation of the system."""
     if argv is None:
         argv = sys.argv[1:]
-    remove_stops, use_semantic, semantic_threshold, use_stemming, export_path = parse_flags(argv)
+    remove_stops, use_semantic, semantic_threshold, use_stemming, export_path, use_synonym = parse_flags(argv)
 
     # Start timing
     start_time = time.time()
@@ -90,6 +92,7 @@ def run_evaluation(argv=None):
             use_semantic=use_semantic,
             semantic_threshold=semantic_threshold,
             use_stemming=use_stemming,
+            use_synonym=use_synonym,
         )
         overall_results[category] = evaluation
         
@@ -150,9 +153,9 @@ def run_evaluation(argv=None):
         try:
             with open(export_path, 'w', encoding='utf-8') as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
-            print(f"\n✓ Results exported to: {export_path}")
+            print(f"\nResults exported to: {export_path}")
         except Exception as e:
-            print(f"\n✗ Error exporting results: {e}")
+            print(f"\nError exporting results: {e}")
 
     return overall_results
 
@@ -160,7 +163,7 @@ def test_semantic_vs_exact(argv=None):
     """Compare semantic matching vs exact/synonym matching."""
     if argv is None:
         argv = sys.argv[1:]
-    _, _, semantic_threshold, use_stemming, _ = parse_flags(argv)
+    _, _, semantic_threshold, use_stemming, _, _ = parse_flags(argv)
     
     system = AuslanSignSystem()
     
