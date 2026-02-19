@@ -114,7 +114,7 @@ The `use_synonym` parameter (default `True`) controls whether synonym matching i
 
 ## Expanding the Dictionary (Scraper)
 
-The scraper crawls [Auslan Signbank](https://auslan.org.au/) to discover new signs and merge them into the project dictionary. It downloads sign videos and extracts keywords, descriptions, and metadata.
+The base dictionary ships with 46 signs. The scraper crawls [Auslan Signbank](https://auslan.org.au/) to expand it by discovering new signs and merging them into the dictionary. It downloads sign videos and extracts keywords, descriptions, and metadata.
 
 ```bash
 # Full scrape — crawl all signs, download videos, merge into dictionary
