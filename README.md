@@ -112,6 +112,36 @@ The `use_synonym` parameter (default `True`) controls whether synonym matching i
 | Places & Objects (4) | house, toilet, big, speak |
 | Temporal & Descriptive (5) | today, tomorrow, time, many, more |
 
+## Expanding the Dictionary (Scraper)
+
+The scraper crawls [Auslan Signbank](https://auslan.org.au/) to discover new signs and merge them into the project dictionary. It downloads sign videos and extracts keywords, descriptions, and metadata.
+
+```bash
+# Full scrape — crawl all signs, download videos, merge into dictionary
+python scripts/scraper.py
+
+# Scrape first 100 signs only (good for testing)
+python scripts/scraper.py --limit 100
+
+# Preview what would be scraped without writing any files
+python scripts/scraper.py --dry-run
+
+# Scrape without downloading videos
+python scripts/scraper.py --no-download
+
+# Scrape without merging into the main dictionary
+python scripts/scraper.py --no-merge
+
+# Custom output path and request delay
+python scripts/scraper.py --output data/gloss/signbank_scraped.json --delay 2.0
+```
+
+The scraper respects `robots.txt`, rate-limits requests (default 1.5s delay), and saves progress incrementally so it can resume interrupted runs. Existing dictionary entries are never overwritten during merge.
+
+Videos are saved to `D:\nlp\auslan-videos` by default (override with `SCRAPED_VIDEO_DIR` env var).
+
+> **Note**: Auslan Signbank content is licensed CC BY-NC-ND 4.0 — non-commercial research/education use only.
+
 ## CLI Flags
 
 Applies to `main.py` and `evaluate.py`:
