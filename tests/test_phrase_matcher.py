@@ -10,11 +10,11 @@ Fixtures from conftest:
 - matcher       : a SignMatcher instance using those mock files (no semantic model)
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
 
-from src.phrase_matcher import IntelligentPhraseMatcher, PhraseMatch
+import pytest
 
+from src.phrase_matcher import IntelligentPhraseMatcher, PhraseMatch
 
 # ---------------------------------------------------------------------------
 # Helpers / shared constants
@@ -27,6 +27,7 @@ _UNKNOWN_WORD = "zzzzunknown"
 # ---------------------------------------------------------------------------
 # Fixture: IntelligentPhraseMatcher backed by mock files, spaCy disabled
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def phrase_matcher(tmp_data_dir, matcher):
@@ -51,6 +52,7 @@ def phrase_matcher(tmp_data_dir, matcher):
 # TestPhraseMatcherInit
 # ---------------------------------------------------------------------------
 
+
 class TestPhraseMatcherInit:
     """Verify the matcher initialises correctly from mock data."""
 
@@ -72,8 +74,15 @@ class TestPhraseMatcherInit:
 
     def test_phrase_patterns_defined(self, phrase_matcher):
         """Phrase pattern dictionary must contain standard categories."""
-        expected_keys = {"greeting", "question", "instruction", "request",
-                         "fitness_command", "emotional", "temporal"}
+        expected_keys = {
+            "greeting",
+            "question",
+            "instruction",
+            "request",
+            "fitness_command",
+            "emotional",
+            "temporal",
+        }
         assert expected_keys.issubset(phrase_matcher.phrase_patterns.keys())
 
     def test_missing_dict_file_gives_empty_dict(self, tmp_data_dir, matcher):
@@ -90,14 +99,22 @@ class TestPhraseMatcherInit:
 # TestBasicAnalysis  (fallback path — nlp is None)
 # ---------------------------------------------------------------------------
 
+
 class TestBasicAnalysis:
     """Tests for _basic_analysis, the fallback when spaCy is unavailable."""
 
     def test_returns_required_keys(self, phrase_matcher):
         result = phrase_matcher._basic_analysis("hello")
-        required = {"original_text", "entities", "sentiment",
-                    "phrase_type", "grammar_structure",
-                    "key_concepts", "action_words", "descriptors"}
+        required = {
+            "original_text",
+            "entities",
+            "sentiment",
+            "phrase_type",
+            "grammar_structure",
+            "key_concepts",
+            "action_words",
+            "descriptors",
+        }
         assert required.issubset(result.keys())
 
     def test_grammar_structure_is_basic(self, phrase_matcher):
@@ -143,6 +160,7 @@ class TestBasicAnalysis:
 # TestAnalyzePhrase  (public API delegates to _basic_analysis when nlp is None)
 # ---------------------------------------------------------------------------
 
+
 class TestAnalyzePhrase:
     """analyze_phrase must delegate to _basic_analysis when self.nlp is None."""
 
@@ -171,6 +189,7 @@ class TestAnalyzePhrase:
 # ---------------------------------------------------------------------------
 # TestSimpleSegmentation  (fallback path — nlp is None)
 # ---------------------------------------------------------------------------
+
 
 class TestSimpleSegmentation:
     """Tests for _simple_segmentation and the public segment_phrase API."""
@@ -213,58 +232,77 @@ class TestSimpleSegmentation:
 # TestMatchSegment  (internal helper)
 # ---------------------------------------------------------------------------
 
+
 class TestMatchSegment:
     """Tests for _match_segment, which tokenises one segment and matches tokens."""
 
     def test_exact_word_matched(self, phrase_matcher):
-        matches = phrase_matcher._match_segment("hello", use_semantic=False, threshold=0.6)
+        matches = phrase_matcher._match_segment(
+            "hello", use_semantic=False, threshold=0.6
+        )
         assert len(matches) == 1
         assert matches[0]["word"] == "hello"
         assert matches[0]["match_type"] == "exact"
         assert matches[0]["confidence"] == 1.0
 
     def test_multiple_words_in_segment(self, phrase_matcher):
-        matches = phrase_matcher._match_segment("hello help", use_semantic=False, threshold=0.6)
+        matches = phrase_matcher._match_segment(
+            "hello help", use_semantic=False, threshold=0.6
+        )
         words = [m["word"] for m in matches]
         assert "hello" in words
         assert "help" in words
 
     def test_unknown_word_produces_no_match(self, phrase_matcher):
-        matches = phrase_matcher._match_segment(_UNKNOWN_WORD, use_semantic=False, threshold=0.6)
+        matches = phrase_matcher._match_segment(
+            _UNKNOWN_WORD, use_semantic=False, threshold=0.6
+        )
         assert matches == []
 
     def test_synonym_word_matched(self, phrase_matcher):
         # "assist" is a synonym of "help" in target_words
-        matches = phrase_matcher._match_segment("assist", use_semantic=False, threshold=0.6)
+        matches = phrase_matcher._match_segment(
+            "assist", use_semantic=False, threshold=0.6
+        )
         assert len(matches) == 1
         assert matches[0]["match_type"] == "synonym"
         assert matches[0]["confidence"] == pytest.approx(0.9)
 
     def test_match_dict_has_required_keys(self, phrase_matcher):
-        matches = phrase_matcher._match_segment("hello", use_semantic=False, threshold=0.6)
+        matches = phrase_matcher._match_segment(
+            "hello", use_semantic=False, threshold=0.6
+        )
         required = {"word", "sign_data", "match_type", "confidence"}
         for match in matches:
             assert required.issubset(match.keys())
 
     def test_sign_data_is_dict(self, phrase_matcher):
-        matches = phrase_matcher._match_segment("hello", use_semantic=False, threshold=0.6)
+        matches = phrase_matcher._match_segment(
+            "hello", use_semantic=False, threshold=0.6
+        )
         assert isinstance(matches[0]["sign_data"], dict)
 
     def test_case_insensitive_matching(self, phrase_matcher):
-        matches = phrase_matcher._match_segment("HELLO", use_semantic=False, threshold=0.6)
+        matches = phrase_matcher._match_segment(
+            "HELLO", use_semantic=False, threshold=0.6
+        )
         assert len(matches) == 1
         assert matches[0]["word"] == "hello"
 
     def test_semantic_disabled_unknown_not_matched(self, phrase_matcher):
         """When use_semantic=False, an unknown word produces no result."""
-        matches = phrase_matcher._match_segment("require", use_semantic=False, threshold=0.6)
+        matches = phrase_matcher._match_segment(
+            "require", use_semantic=False, threshold=0.6
+        )
         assert matches == []
 
     def test_semantic_enabled_delegates_to_sign_matcher(self, phrase_matcher):
         """When use_semantic=True and word is unknown, the injected SignMatcher
         is asked for a semantic match (which returns None here because no
         semantic model is loaded, but the call must not raise)."""
-        matches = phrase_matcher._match_segment("require", use_semantic=True, threshold=0.6)
+        matches = phrase_matcher._match_segment(
+            "require", use_semantic=True, threshold=0.6
+        )
         # Without a real semantic model the result is still empty — but no crash.
         assert isinstance(matches, list)
 
@@ -272,6 +310,7 @@ class TestMatchSegment:
 # ---------------------------------------------------------------------------
 # TestMatchPhraseIntelligently  (the primary public method)
 # ---------------------------------------------------------------------------
+
 
 class TestMatchPhraseIntelligently:
     """Tests for the main match_phrase_intelligently method."""
@@ -381,6 +420,7 @@ class TestMatchPhraseIntelligently:
 # TestOptimizeSignOrder
 # ---------------------------------------------------------------------------
 
+
 class TestOptimizeSignOrder:
     """Tests for the grammar-ordering optimisation step."""
 
@@ -390,18 +430,30 @@ class TestOptimizeSignOrder:
         assert result == []
 
     def test_single_match_returned_unchanged(self, phrase_matcher):
-        match = {"word": "hello", "match_type": "exact", "confidence": 1.0,
-                 "sign_data": {"category": "greeting"}}
+        match = {
+            "word": "hello",
+            "match_type": "exact",
+            "confidence": 1.0,
+            "sign_data": {"category": "greeting"},
+        }
         analysis = {"phrase_type": "statement"}
         result = phrase_matcher._optimize_sign_order([match], analysis)
         assert len(result) == 1
 
     def test_question_wh_words_moved_to_end(self, phrase_matcher):
         """For question phrases, wh-words should appear after other tokens."""
-        how_match = {"word": "how", "match_type": "exact", "confidence": 1.0,
-                     "sign_data": {"category": "question"}}
-        hello_match = {"word": "hello", "match_type": "exact", "confidence": 1.0,
-                       "sign_data": {"category": "greeting"}}
+        how_match = {
+            "word": "how",
+            "match_type": "exact",
+            "confidence": 1.0,
+            "sign_data": {"category": "question"},
+        }
+        hello_match = {
+            "word": "hello",
+            "match_type": "exact",
+            "confidence": 1.0,
+            "sign_data": {"category": "greeting"},
+        }
         analysis = {"phrase_type": "question"}
         result = phrase_matcher._optimize_sign_order([how_match, hello_match], analysis)
         # "hello" must appear before "how" in the output
@@ -410,28 +462,46 @@ class TestOptimizeSignOrder:
 
     def test_non_question_order_preserved_by_priority(self, phrase_matcher):
         """For non-question phrases, higher-priority categories sort earlier."""
-        water_match = {"word": "water", "match_type": "exact", "confidence": 1.0,
-                       "sign_data": {"category": "basic_needs"}}
-        exercise_match = {"word": "exercise", "match_type": "exact", "confidence": 1.0,
-                          "sign_data": {"category": "fitness_actions"}}
+        water_match = {
+            "word": "water",
+            "match_type": "exact",
+            "confidence": 1.0,
+            "sign_data": {"category": "basic_needs"},
+        }
+        exercise_match = {
+            "word": "exercise",
+            "match_type": "exact",
+            "confidence": 1.0,
+            "sign_data": {"category": "fitness_actions"},
+        }
         analysis = {"phrase_type": "statement"}
-        result = phrase_matcher._optimize_sign_order([exercise_match, water_match], analysis)
+        result = phrase_matcher._optimize_sign_order(
+            [exercise_match, water_match], analysis
+        )
         # basic_needs (priority 3) < fitness_actions (priority 9), so water first
         words = [m["word"] for m in result]
         assert words.index("water") < words.index("exercise")
 
     def test_unknown_category_does_not_crash(self, phrase_matcher):
         """A sign_data with an unrecognised category must not raise."""
-        weird_match = {"word": "thing", "match_type": "exact", "confidence": 0.8,
-                       "sign_data": {"category": "completely_unknown_category"}}
+        weird_match = {
+            "word": "thing",
+            "match_type": "exact",
+            "confidence": 0.8,
+            "sign_data": {"category": "completely_unknown_category"},
+        }
         analysis = {"phrase_type": "statement"}
         result = phrase_matcher._optimize_sign_order([weird_match], analysis)
         assert len(result) == 1
 
     def test_missing_sign_data_does_not_crash(self, phrase_matcher):
         """A match with no sign_data must be handled gracefully."""
-        match = {"word": "test", "match_type": "exact", "confidence": 0.9,
-                 "sign_data": None}
+        match = {
+            "word": "test",
+            "match_type": "exact",
+            "confidence": 0.9,
+            "sign_data": None,
+        }
         analysis = {"phrase_type": "statement"}
         result = phrase_matcher._optimize_sign_order([match], analysis)
         assert len(result) == 1
@@ -440,6 +510,7 @@ class TestOptimizeSignOrder:
 # ---------------------------------------------------------------------------
 # TestGetPhraseSuggestions
 # ---------------------------------------------------------------------------
+
 
 class TestGetPhraseSuggestions:
     """Tests for autocomplete suggestions from get_phrase_suggestions."""
@@ -485,6 +556,7 @@ class TestGetPhraseSuggestions:
 # TestPhraseMatcher_WithMockedSignMatcher
 # ---------------------------------------------------------------------------
 
+
 class TestPhraseMatcherWithMockedSignMatcher:
     """
     Verify IntelligentPhraseMatcher integration with a fully mocked SignMatcher,
@@ -525,7 +597,9 @@ class TestPhraseMatcherWithMockedSignMatcher:
 
     def test_semantic_confidence_propagated(self, pm_with_mock):
         result = pm_with_mock.match_phrase_intelligently("require", use_semantic=True)
-        semantic_matches = [m for m in result.matched_signs if m["match_type"] == "semantic"]
+        semantic_matches = [
+            m for m in result.matched_signs if m["match_type"] == "semantic"
+        ]
         assert len(semantic_matches) == 1
         assert semantic_matches[0]["confidence"] == pytest.approx(0.75)
 

@@ -15,10 +15,9 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 
 import config
 from main import AuslanSignSystem
@@ -31,7 +30,6 @@ from models import (
     HealthResponse,
     ModelsStatusResponse,
     ProcessRequest,
-    ProcessResponse,
     SuggestionsRequest,
     SuggestionsResponse,
 )
@@ -56,7 +54,10 @@ async def lifespan(app: FastAPI):
     )
     logger.info("Starting Auslan Sign Retrieval API...")
     _sign_system = AuslanSignSystem()
-    logger.info("System ready. %d signs loaded.", len(_sign_system.matcher.gloss_dict) if _sign_system.matcher else 0)
+    logger.info(
+        "System ready. %d signs loaded.",
+        len(_sign_system.matcher.gloss_dict) if _sign_system.matcher else 0,
+    )
     yield
     logger.info("Shutting down.")
 
@@ -91,6 +92,7 @@ def get_system() -> AuslanSignSystem:
 # Health / utility endpoints
 # ---------------------------------------------------------------------------
 
+
 @app.get("/api/health", response_model=HealthResponse, tags=["System"])
 async def health():
     """Health check endpoint."""
@@ -107,11 +109,17 @@ async def model_status():
     """Check which AI models and components are loaded."""
     system = get_system()
     return ModelsStatusResponse(
-        spacy_available=system.nlp_processor is not None and system.nlp_processor.nlp is not None,
-        semantic_model_available=system.matcher is not None and getattr(system.matcher, "semantic_model", None) is not None,
-        sentiment_model_available=system.nlp_processor is not None and system.nlp_processor.sentiment_model is not None,
-        emotion_model_available=system.nlp_processor is not None and system.nlp_processor.emotion_model is not None,
-        llm_available=hasattr(system, "llm_processor") and getattr(system, "llm_processor", None) is not None and system.llm_processor.available,
+        spacy_available=system.nlp_processor is not None
+        and system.nlp_processor.nlp is not None,
+        semantic_model_available=system.matcher is not None
+        and getattr(system.matcher, "semantic_model", None) is not None,
+        sentiment_model_available=system.nlp_processor is not None
+        and system.nlp_processor.sentiment_model is not None,
+        emotion_model_available=system.nlp_processor is not None
+        and system.nlp_processor.emotion_model is not None,
+        llm_available=hasattr(system, "llm_processor")
+        and getattr(system, "llm_processor", None) is not None
+        and system.llm_processor.available,
         intelligent_matching_available=system.phrase_matcher is not None,
         total_signs=len(system.matcher.gloss_dict) if system.matcher else 0,
         semantic_model_name=config.SEMANTIC_MODEL_NAME,
@@ -122,6 +130,7 @@ async def model_status():
 # ---------------------------------------------------------------------------
 # Core processing endpoint
 # ---------------------------------------------------------------------------
+
 
 @app.post("/api/process", tags=["Matching"])
 async def process_text(req: ProcessRequest) -> Dict[str, Any]:
@@ -148,6 +157,7 @@ async def process_text(req: ProcessRequest) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Batch evaluation endpoint
 # ---------------------------------------------------------------------------
+
 
 @app.post("/api/evaluate", tags=["Evaluation"])
 async def evaluate_system(req: EvaluateRequest) -> Dict[str, Any]:
@@ -176,6 +186,7 @@ async def evaluate_system(req: EvaluateRequest) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # NLP analysis endpoint
 # ---------------------------------------------------------------------------
+
 
 @app.post("/api/analyze", response_model=AnalyzeResponse, tags=["NLP"])
 async def analyze_text(req: AnalyzeRequest) -> AnalyzeResponse:
@@ -207,6 +218,7 @@ async def analyze_text(req: AnalyzeRequest) -> AnalyzeResponse:
 # Autocomplete suggestions endpoint
 # ---------------------------------------------------------------------------
 
+
 @app.post("/api/suggestions", response_model=SuggestionsResponse, tags=["NLP"])
 async def get_suggestions(req: SuggestionsRequest) -> SuggestionsResponse:
     """Return phrase autocomplete suggestions for partial input."""
@@ -221,6 +233,7 @@ async def get_suggestions(req: SuggestionsRequest) -> SuggestionsResponse:
 # ---------------------------------------------------------------------------
 # Dictionary endpoint
 # ---------------------------------------------------------------------------
+
 
 @app.get("/api/dictionary", response_model=DictionaryResponse, tags=["Dictionary"])
 async def get_dictionary() -> DictionaryResponse:
@@ -241,7 +254,9 @@ async def get_dictionary() -> DictionaryResponse:
             gloss=data.get("gloss"),
             category=category,
             synonyms=data.get("synonyms", [])[:3],
-            description=description[:100] + "..." if len(description) > 100 else description,
+            description=description[:100] + "..."
+            if len(description) > 100
+            else description,
         )
 
     return DictionaryResponse(
@@ -254,6 +269,7 @@ async def get_dictionary() -> DictionaryResponse:
 # ---------------------------------------------------------------------------
 # Video serving
 # ---------------------------------------------------------------------------
+
 
 @app.get("/media/videos/{filename}", tags=["Media"])
 async def serve_video(filename: str):
@@ -276,6 +292,7 @@ async def serve_video(filename: str):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "api:app",
         host=config.SERVER_HOST,

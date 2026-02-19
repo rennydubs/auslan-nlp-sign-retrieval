@@ -13,10 +13,10 @@ Run with:
     pytest tests/test_api.py -v
 """
 
-import pytest
-from httpx import AsyncClient, ASGITransport
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 
+import pytest
+from httpx import ASGITransport, AsyncClient
 
 # ---------------------------------------------------------------------------
 # Mock data fixtures
@@ -102,6 +102,7 @@ MOCK_PROCESS_RESPONSE = {
 # NLPAnalysis object mock (returned by nlp_processor.analyze_text)
 # ---------------------------------------------------------------------------
 
+
 def _make_nlp_analysis_mock():
     """Return a mock that looks like an NLPAnalysis dataclass."""
     nlp = MagicMock()
@@ -121,6 +122,7 @@ def _make_nlp_analysis_mock():
 # ---------------------------------------------------------------------------
 # Core mock fixture: _sign_system
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_sign_system():
@@ -181,6 +183,7 @@ def mock_sign_system():
 # Async client fixture
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 async def async_client(mock_sign_system):
     """
@@ -203,6 +206,7 @@ async def async_client(mock_sign_system):
 # ===========================================================================
 # Tests: GET /api/health
 # ===========================================================================
+
 
 class TestHealthEndpoint:
     """GET /api/health must return 200 with status and version information."""
@@ -247,6 +251,7 @@ class TestHealthEndpoint:
 # ===========================================================================
 # Tests: GET /api/models/status
 # ===========================================================================
+
 
 class TestModelsStatusEndpoint:
     """GET /api/models/status must return 200 with component availability flags."""
@@ -306,6 +311,7 @@ class TestModelsStatusEndpoint:
 # Tests: POST /api/process
 # ===========================================================================
 
+
 class TestProcessEndpoint:
     """POST /api/process — main sign matching endpoint."""
 
@@ -351,7 +357,11 @@ class TestProcessEndpoint:
         await async_client.post("/api/process", json={"text": "hello help"})
         mock_sign_system.process_input.assert_called_once()
         call_args = mock_sign_system.process_input.call_args
-        assert call_args[0][0] == "hello help" or call_args[1].get("text") == "hello help" or call_args.args[0] == "hello help"
+        assert (
+            call_args[0][0] == "hello help"
+            or call_args[1].get("text") == "hello help"
+            or call_args.args[0] == "hello help"
+        )
 
     @pytest.mark.asyncio
     async def test_empty_text_returns_422(self, async_client):
@@ -366,7 +376,9 @@ class TestProcessEndpoint:
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_options_remove_stops_passed_through(self, async_client, mock_sign_system):
+    async def test_options_remove_stops_passed_through(
+        self, async_client, mock_sign_system
+    ):
         """ProcessOptions fields must be forwarded to process_input."""
         await async_client.post(
             "/api/process",
@@ -395,55 +407,72 @@ class TestProcessEndpoint:
 # Tests: POST /api/analyze
 # ===========================================================================
 
+
 class TestAnalyzeEndpoint:
     """POST /api/analyze — detailed NLP analysis only."""
 
     @pytest.mark.asyncio
     async def test_valid_request_returns_200(self, async_client):
-        response = await async_client.post("/api/analyze", json={"text": "I feel happy"})
+        response = await async_client.post(
+            "/api/analyze", json={"text": "I feel happy"}
+        )
         assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_response_has_sentiment(self, async_client):
-        response = await async_client.post("/api/analyze", json={"text": "I feel happy"})
+        response = await async_client.post(
+            "/api/analyze", json={"text": "I feel happy"}
+        )
         body = response.json()
         assert "sentiment" in body
 
     @pytest.mark.asyncio
     async def test_response_has_emotion(self, async_client):
-        response = await async_client.post("/api/analyze", json={"text": "I feel happy"})
+        response = await async_client.post(
+            "/api/analyze", json={"text": "I feel happy"}
+        )
         body = response.json()
         assert "emotion" in body
 
     @pytest.mark.asyncio
     async def test_response_has_intent(self, async_client):
-        response = await async_client.post("/api/analyze", json={"text": "I feel happy"})
+        response = await async_client.post(
+            "/api/analyze", json={"text": "I feel happy"}
+        )
         body = response.json()
         assert "intent" in body
 
     @pytest.mark.asyncio
     async def test_response_has_entities(self, async_client):
-        response = await async_client.post("/api/analyze", json={"text": "I feel happy"})
+        response = await async_client.post(
+            "/api/analyze", json={"text": "I feel happy"}
+        )
         body = response.json()
         assert "entities" in body
         assert isinstance(body["entities"], list)
 
     @pytest.mark.asyncio
     async def test_response_has_key_phrases(self, async_client):
-        response = await async_client.post("/api/analyze", json={"text": "I feel happy"})
+        response = await async_client.post(
+            "/api/analyze", json={"text": "I feel happy"}
+        )
         body = response.json()
         assert "key_phrases" in body
 
     @pytest.mark.asyncio
     async def test_response_has_formality(self, async_client):
-        response = await async_client.post("/api/analyze", json={"text": "I feel happy"})
+        response = await async_client.post(
+            "/api/analyze", json={"text": "I feel happy"}
+        )
         body = response.json()
         assert "formality" in body
 
     @pytest.mark.asyncio
     async def test_analyze_text_called(self, async_client, mock_sign_system):
         await async_client.post("/api/analyze", json={"text": "I feel happy"})
-        mock_sign_system.nlp_processor.analyze_text.assert_called_once_with("I feel happy")
+        mock_sign_system.nlp_processor.analyze_text.assert_called_once_with(
+            "I feel happy"
+        )
 
     @pytest.mark.asyncio
     async def test_empty_text_returns_422(self, async_client):
@@ -467,6 +496,7 @@ class TestAnalyzeEndpoint:
 # ===========================================================================
 # Tests: GET /api/dictionary
 # ===========================================================================
+
 
 class TestDictionaryEndpoint:
     """GET /api/dictionary — full sign dictionary listing."""
@@ -544,6 +574,7 @@ class TestDictionaryEndpoint:
 # Tests: POST /api/suggestions
 # ===========================================================================
 
+
 class TestSuggestionsEndpoint:
     """POST /api/suggestions — phrase autocomplete."""
 
@@ -580,7 +611,9 @@ class TestSuggestionsEndpoint:
     @pytest.mark.asyncio
     async def test_get_phrase_suggestions_called(self, async_client, mock_sign_system):
         await async_client.post("/api/suggestions", json={"text": "hel"})
-        mock_sign_system.phrase_matcher.get_phrase_suggestions.assert_called_once_with("hel", limit=8)
+        mock_sign_system.phrase_matcher.get_phrase_suggestions.assert_called_once_with(
+            "hel", limit=8
+        )
 
     @pytest.mark.asyncio
     async def test_too_short_text_returns_422(self, async_client):
@@ -606,6 +639,7 @@ class TestSuggestionsEndpoint:
 # ===========================================================================
 # Tests: GET /media/videos/<filename>
 # ===========================================================================
+
 
 class TestVideoEndpoint:
     """GET /media/videos/<filename> — video file serving."""
@@ -634,6 +668,7 @@ class TestVideoEndpoint:
 # ===========================================================================
 # Tests: system not initialised (503 responses)
 # ===========================================================================
+
 
 class TestSystemNotInitialized:
     """Endpoints must return 503 when _sign_system is None."""

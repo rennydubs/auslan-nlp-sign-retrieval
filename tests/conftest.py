@@ -66,7 +66,7 @@ MOCK_GLOSS_DICT = {
 MOCK_TARGET_WORDS = {
     "target_words": [
         {"word": "hello", "synonyms": ["hi", "greetings", "howdy"]},
-        {"word": "help",  "synonyms": ["assist", "aid", "support"]},
+        {"word": "help", "synonyms": ["assist", "aid", "support"]},
         {"word": "happy", "synonyms": ["glad", "joyful", "pleased"]},
         {"word": "exercise", "synonyms": ["workout", "training", "drill"]},
     ]
@@ -92,7 +92,7 @@ def tmp_data_dir():
         # Write mock files
         gloss_path = os.path.join(tmpdir, "auslan_dictionary.json")
         words_path = os.path.join(tmpdir, "target_words.json")
-        syn_path   = os.path.join(tmpdir, "synonym_mapping.json")
+        syn_path = os.path.join(tmpdir, "synonym_mapping.json")
 
         with open(gloss_path, "w") as f:
             json.dump(MOCK_GLOSS_DICT, f)
@@ -113,6 +113,7 @@ def tmp_data_dir():
 def matcher(tmp_data_dir):
     """A SignMatcher instance using mock data and NO semantic model."""
     from src.matcher import SignMatcher
+
     return SignMatcher(
         gloss_dict_path=tmp_data_dir["gloss_dict"],
         target_words_path=tmp_data_dir["target_words"],
@@ -127,6 +128,7 @@ def matcher(tmp_data_dir):
 def preprocessor():
     """A TextPreprocessor with no spaCy (pure tokenizer)."""
     from src.preprocessing import TextPreprocessor
+
     return TextPreprocessor(shared_spacy_model=None)
 
 

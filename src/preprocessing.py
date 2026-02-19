@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import spacy
+
     _SPACY_AVAILABLE = True
 except ImportError:
     _SPACY_AVAILABLE = False
@@ -24,13 +25,37 @@ class TextPreprocessor:
     Includes tokenization, normalization, lemmatization, and cleaning operations.
     """
 
-    def __init__(self, spacy_model_name: str = "en_core_web_sm",
-                 shared_spacy_model=None):
+    def __init__(
+        self, spacy_model_name: str = "en_core_web_sm", shared_spacy_model=None
+    ):
         """Initialize the preprocessor with stop words, contractions, and optional spaCy model."""
         self.stop_words = {
-            'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from',
-            'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the',
-            'to', 'was', 'will', 'with', 'you', 'your'
+            "a",
+            "an",
+            "and",
+            "are",
+            "as",
+            "at",
+            "be",
+            "by",
+            "for",
+            "from",
+            "has",
+            "he",
+            "in",
+            "is",
+            "it",
+            "its",
+            "of",
+            "on",
+            "that",
+            "the",
+            "to",
+            "was",
+            "will",
+            "with",
+            "you",
+            "your",
         }
 
         self.contractions = {
@@ -42,7 +67,7 @@ class TextPreprocessor:
             "'ve": " have",
             "'ll": " will",
             "'d": " would",
-            "'m": " am"
+            "'m": " am",
         }
 
         self.stemmer = PorterStemmer()
@@ -56,7 +81,10 @@ class TextPreprocessor:
                 self._nlp = spacy.load(spacy_model_name)
                 logger.info("Preprocessor loaded spaCy model: %s", spacy_model_name)
             except OSError:
-                logger.warning("spaCy model '%s' not found. Lemmatization unavailable.", spacy_model_name)
+                logger.warning(
+                    "spaCy model '%s' not found. Lemmatization unavailable.",
+                    spacy_model_name,
+                )
 
     def clean_text(self, text: str) -> str:
         """Clean input text by removing special characters and normalizing."""
@@ -69,10 +97,10 @@ class TextPreprocessor:
             text = text.replace(contraction, expansion)
 
         # Remove punctuation except apostrophes
-        text = re.sub(r'[^\w\s\']', ' ', text)
+        text = re.sub(r"[^\w\s\']", " ", text)
 
         # Remove extra whitespace
-        text = ' '.join(text.split())
+        text = " ".join(text.split())
 
         return text
 
@@ -82,7 +110,7 @@ class TextPreprocessor:
         tokens = cleaned_text.split()
 
         # Filter out empty tokens and single characters (except 'a', 'i')
-        return [t for t in tokens if len(t) > 1 or t in ['a', 'i']]
+        return [t for t in tokens if len(t) > 1 or t in ["a", "i"]]
 
     def remove_stop_words(self, tokens: List[str]) -> List[str]:
         """Remove common stop words from token list."""
@@ -105,23 +133,27 @@ class TextPreprocessor:
             return tokens
 
         # Process as a single string so spaCy can use POS context
-        text = ' '.join(tokens)
+        text = " ".join(tokens)
         doc = self._nlp(text)
 
         lemmatized = []
         for token in doc:
             lemma = token.lemma_.lower()
             # spaCy sometimes returns -PRON- for pronouns; keep original in that case
-            if lemma.startswith('-') and lemma.endswith('-'):
+            if lemma.startswith("-") and lemma.endswith("-"):
                 lemmatized.append(token.text.lower())
             else:
                 lemmatized.append(lemma)
 
         return lemmatized
 
-    def preprocess(self, text: str, remove_stops: bool = False,
-                   use_stemming: bool = False,
-                   use_lemmatization: bool = False) -> List[str]:
+    def preprocess(
+        self,
+        text: str,
+        remove_stops: bool = False,
+        use_stemming: bool = False,
+        use_lemmatization: bool = False,
+    ) -> List[str]:
         """Complete preprocessing pipeline.
 
         Args:
@@ -146,16 +178,22 @@ class TextPreprocessor:
 
         return tokens
 
-    def preprocess_batch(self, texts: List[str], remove_stops: bool = False,
-                         use_stemming: bool = False,
-                         use_lemmatization: bool = False) -> List[List[str]]:
+    def preprocess_batch(
+        self,
+        texts: List[str],
+        remove_stops: bool = False,
+        use_stemming: bool = False,
+        use_lemmatization: bool = False,
+    ) -> List[List[str]]:
         """Process multiple texts in batch."""
-        return [self.preprocess(text, remove_stops, use_stemming, use_lemmatization)
-                for text in texts]
+        return [
+            self.preprocess(text, remove_stops, use_stemming, use_lemmatization)
+            for text in texts
+        ]
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     preprocessor = TextPreprocessor()
 

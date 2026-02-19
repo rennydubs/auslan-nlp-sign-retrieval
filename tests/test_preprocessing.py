@@ -4,6 +4,7 @@ All tests run without spaCy (shared_spacy_model=None).
 """
 
 import pytest
+
 from src.preprocessing import TextPreprocessor
 
 
@@ -107,7 +108,7 @@ class TestPreprocess:
     def test_lemmatization_flag(self, prep):
         """Lemmatization flag should either apply lemmatization or fall back gracefully."""
         tokens_normal = prep.preprocess("running exercises", use_lemmatization=False)
-        tokens_lemma  = prep.preprocess("running exercises", use_lemmatization=True)
+        tokens_lemma = prep.preprocess("running exercises", use_lemmatization=True)
         # Both must be non-empty lists of strings
         assert isinstance(tokens_normal, list) and len(tokens_normal) > 0
         assert isinstance(tokens_lemma, list) and len(tokens_lemma) > 0

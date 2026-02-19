@@ -8,7 +8,7 @@ import hashlib
 import json
 import logging
 import os
-from typing import List, Dict, Any, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -16,13 +16,16 @@ logger = logging.getLogger(__name__)
 
 try:
     from sentence_transformers import SentenceTransformer
+
     SEMANTIC_AVAILABLE = True
 except ImportError:
     SEMANTIC_AVAILABLE = False
     logger.info("sentence-transformers not available. Semantic matching disabled.")
 
 try:
-    from rapidfuzz import fuzz, process as rfprocess
+    from rapidfuzz import fuzz
+    from rapidfuzz import process as rfprocess
+
     FUZZY_AVAILABLE = True
 except ImportError:
     FUZZY_AVAILABLE = False
@@ -46,17 +49,21 @@ class SignMatcher:
     Pipeline order: exact → fuzzy → synonym → semantic → LLM fallback
     """
 
-    def __init__(self, gloss_dict_path: str, target_words_path: str = None,
-                 synonym_mapping_path: str = None,
-                 wordnet_synonyms_path: str = None,
-                 semantic_model_name: str = "intfloat/e5-base-v2",
-                 shared_semantic_model=None,
-                 embedding_cache_dir: str = None,
-                 fuzzy_threshold: int = 85,
-                 fuzzy_confidence: float = 0.85,
-                 query_prefix: str = "query: ",
-                 passage_prefix: str = "passage: ",
-                 llm_processor=None):
+    def __init__(
+        self,
+        gloss_dict_path: str,
+        target_words_path: str = None,
+        synonym_mapping_path: str = None,
+        wordnet_synonyms_path: str = None,
+        semantic_model_name: str = "intfloat/e5-base-v2",
+        shared_semantic_model=None,
+        embedding_cache_dir: str = None,
+        fuzzy_threshold: int = 85,
+        fuzzy_confidence: float = 0.85,
+        query_prefix: str = "query: ",
+        passage_prefix: str = "passage: ",
+        llm_processor=None,
+    ):
         """
         Initialize the matcher.
 
@@ -75,7 +82,11 @@ class SignMatcher:
             llm_processor: Optional LLMProcessor instance for LLM-assisted fallback matching.
         """
         self.gloss_dict = self._load_json(gloss_dict_path, "GLOSS dictionary")
-        self.target_words = self._load_json(target_words_path, "target words") if target_words_path else None
+        self.target_words = (
+            self._load_json(target_words_path, "target words")
+            if target_words_path
+            else None
+        )
         self._synonym_mapping_path = synonym_mapping_path
         self._wordnet_synonyms_path = wordnet_synonyms_path
         self._fuzzy_threshold = fuzzy_threshold
@@ -86,12 +97,14 @@ class SignMatcher:
         self.synonym_map = self._build_synonym_map()
         self.phrase_to_main: Dict[str, str] = {}
         for key, main in self.synonym_map.items():
-            if ' ' in key:
+            if " " in key:
                 self.phrase_to_main[key] = main
         for word in self.gloss_dict.keys():
-            if ' ' in word:
+            if " " in word:
                 self.phrase_to_main[word] = word
-        self.max_phrase_len = max((len(p.split()) for p in self.phrase_to_main), default=1)
+        self.max_phrase_len = max(
+            (len(p.split()) for p in self.phrase_to_main), default=1
+        )
 
         # Pre-compute fuzzy match choices (dictionary keys as a list)
         self._fuzzy_choices = list(self.gloss_dict.keys()) if FUZZY_AVAILABLE else []
@@ -116,7 +129,7 @@ class SignMatcher:
         if not path:
             return {}
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logger.error("Error loading %s from %s: %s", label, path, e)
@@ -131,7 +144,7 @@ class SignMatcher:
             if not path:
                 continue
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     for k, v in data.items():
                         merged[k.lower()] = v.lower()
@@ -149,8 +162,8 @@ class SignMatcher:
         # Map dictionary entries and their embedded synonyms
         for word, data in self.gloss_dict.items():
             synonym_map[word.lower()] = word
-            if 'synonyms' in data:
-                for synonym in data['synonyms']:
+            if "synonyms" in data:
+                for synonym in data["synonyms"]:
                     syn_lower = synonym.lower()
                     if syn_lower not in self.gloss_dict:
                         synonym_map[syn_lower] = word
@@ -179,8 +192,8 @@ class SignMatcher:
             for word, data in self.gloss_dict.items():
                 all_terms.append(word)
                 self.term_to_word[word] = word
-                if 'synonyms' in data:
-                    for synonym in data['synonyms']:
+                if "synonyms" in data:
+                    for synonym in data["synonyms"]:
                         all_terms.append(synonym)
                         self.term_to_word[synonym] = word
 
@@ -206,9 +219,13 @@ class SignMatcher:
         """Get the cache file path for the current dictionary state."""
         if not self._embedding_cache_dir:
             return None
-        terms_hash = hashlib.md5(json.dumps(sorted(all_terms)).encode()).hexdigest()[:12]
-        model_slug = self._semantic_model_name.replace('/', '_')
-        return os.path.join(self._embedding_cache_dir, f"embeddings_{model_slug}_{terms_hash}.npy")
+        terms_hash = hashlib.md5(json.dumps(sorted(all_terms)).encode()).hexdigest()[
+            :12
+        ]
+        model_slug = self._semantic_model_name.replace("/", "_")
+        return os.path.join(
+            self._embedding_cache_dir, f"embeddings_{model_slug}_{terms_hash}.npy"
+        )
 
     def _try_load_embedding_cache(self, all_terms: List[str]) -> bool:
         """Try to load embeddings from disk cache."""
@@ -244,14 +261,16 @@ class SignMatcher:
         token_lower = token.lower()
         if token_lower in self.gloss_dict:
             return {
-                'word': token_lower,
-                'match_type': 'exact',
-                'confidence': 1.0,
-                'sign_data': self.gloss_dict[token_lower]
+                "word": token_lower,
+                "match_type": "exact",
+                "confidence": 1.0,
+                "sign_data": self.gloss_dict[token_lower],
             }
         return None
 
-    def fuzzy_match(self, token: str, threshold: int = None) -> Optional[Dict[str, Any]]:
+    def fuzzy_match(
+        self, token: str, threshold: int = None
+    ) -> Optional[Dict[str, Any]]:
         """Stage 2: Fuzzy string matching for typo tolerance using RapidFuzz."""
         if not FUZZY_AVAILABLE or not self._fuzzy_choices:
             return None
@@ -263,10 +282,7 @@ class SignMatcher:
 
         # Use extractOne for the best match above threshold
         result = rfprocess.extractOne(
-            token_lower,
-            self._fuzzy_choices,
-            scorer=fuzz.ratio,
-            score_cutoff=threshold
+            token_lower, self._fuzzy_choices, scorer=fuzz.ratio, score_cutoff=threshold
         )
 
         if result is not None:
@@ -275,12 +291,12 @@ class SignMatcher:
             if matched_word == token_lower:
                 return None
             return {
-                'word': matched_word,
-                'match_type': 'fuzzy',
-                'matched_input': token_lower,
-                'confidence': self._fuzzy_confidence,
-                'fuzzy_score': score,
-                'sign_data': self.gloss_dict[matched_word]
+                "word": matched_word,
+                "match_type": "fuzzy",
+                "matched_input": token_lower,
+                "confidence": self._fuzzy_confidence,
+                "fuzzy_score": score,
+                "sign_data": self.gloss_dict[matched_word],
             }
 
         return None
@@ -294,15 +310,17 @@ class SignMatcher:
             if main_word == token_lower:
                 return None
             return {
-                'word': main_word,
-                'match_type': 'synonym',
-                'matched_synonym': token_lower,
-                'confidence': 0.9,
-                'sign_data': self.gloss_dict[main_word]
+                "word": main_word,
+                "match_type": "synonym",
+                "matched_synonym": token_lower,
+                "confidence": 0.9,
+                "sign_data": self.gloss_dict[main_word],
             }
         return None
 
-    def semantic_match(self, token: str, threshold: float = 0.6) -> Optional[Dict[str, Any]]:
+    def semantic_match(
+        self, token: str, threshold: float = 0.6
+    ) -> Optional[Dict[str, Any]]:
         """Stage 4: Semantic similarity matching using embeddings."""
         if not self.semantic_model or self.gloss_embeddings is None:
             return None
@@ -329,11 +347,11 @@ class SignMatcher:
                 matched_term = self.embedding_terms[best_idx]
                 main_word = self.term_to_word[matched_term]
                 return {
-                    'word': main_word,
-                    'match_type': 'semantic',
-                    'matched_term': matched_term,
-                    'confidence': float(best_similarity),
-                    'sign_data': self.gloss_dict[main_word]
+                    "word": main_word,
+                    "match_type": "semantic",
+                    "matched_term": matched_term,
+                    "confidence": float(best_similarity),
+                    "sign_data": self.gloss_dict[main_word],
                 }
 
         except Exception as e:
@@ -352,7 +370,9 @@ class SignMatcher:
             token:   The unmatched token to look up.
             context: Optional surrounding sentence for disambiguation.
         """
-        if not self._llm_processor or not getattr(self._llm_processor, 'available', False):
+        if not self._llm_processor or not getattr(
+            self._llm_processor, "available", False
+        ):
             return None
 
         try:
@@ -365,20 +385,20 @@ class SignMatcher:
                 if result:
                     return {
                         **result,
-                        'match_type': 'llm',
-                        'confidence': 0.7,
-                        'llm_original_token': token,
-                        'llm_candidate': candidate,
+                        "match_type": "llm",
+                        "confidence": 0.7,
+                        "llm_original_token": token,
+                        "llm_candidate": candidate,
                     }
                 # Try synonym match
                 result = self.synonym_match(candidate)
                 if result:
                     return {
                         **result,
-                        'match_type': 'llm',
-                        'confidence': 0.65,
-                        'llm_original_token': token,
-                        'llm_candidate': candidate,
+                        "match_type": "llm",
+                        "confidence": 0.65,
+                        "llm_original_token": token,
+                        "llm_candidate": candidate,
                     }
         except Exception as e:
             logger.warning("LLM match failed for token '%s': %s", token, e)
@@ -389,9 +409,13 @@ class SignMatcher:
     # Combined matching
     # ------------------------------------------------------------------
 
-    def match_token(self, token: str, use_semantic: bool = True,
-                    threshold: float = 0.6,
-                    use_llm: bool = False) -> Optional[Dict[str, Any]]:
+    def match_token(
+        self,
+        token: str,
+        use_semantic: bool = True,
+        threshold: float = 0.6,
+        use_llm: bool = False,
+    ) -> Optional[Dict[str, Any]]:
         """Match a single token using all available strategies.
 
         Pipeline: exact → fuzzy → synonym → semantic → LLM
@@ -420,9 +444,13 @@ class SignMatcher:
 
         return None
 
-    def match_tokens(self, tokens: List[str], use_semantic: bool = True,
-                     threshold: float = 0.6,
-                     use_llm: bool = False) -> List[Dict[str, Any]]:
+    def match_tokens(
+        self,
+        tokens: List[str],
+        use_semantic: bool = True,
+        threshold: float = 0.6,
+        use_llm: bool = False,
+    ) -> List[Dict[str, Any]]:
         """Match multiple tokens with n-gram phrase detection."""
         results: List[Dict[str, Any]] = []
         i = 0
@@ -431,16 +459,18 @@ class SignMatcher:
         while i < n:
             matched_phrase = False
             for window in range(min(self.max_phrase_len, n - i), 1, -1):
-                phrase = ' '.join(tokens[i:i + window]).lower()
+                phrase = " ".join(tokens[i : i + window]).lower()
                 if phrase in self.phrase_to_main:
                     main_word = self.phrase_to_main[phrase]
-                    results.append({
-                        'word': main_word,
-                        'match_type': 'synonym' if main_word != phrase else 'exact',
-                        'matched_synonym': phrase if main_word != phrase else None,
-                        'confidence': 0.95 if main_word != phrase else 1.0,
-                        'sign_data': self.gloss_dict.get(main_word)
-                    })
+                    results.append(
+                        {
+                            "word": main_word,
+                            "match_type": "synonym" if main_word != phrase else "exact",
+                            "matched_synonym": phrase if main_word != phrase else None,
+                            "confidence": 0.95 if main_word != phrase else 1.0,
+                            "sign_data": self.gloss_dict.get(main_word),
+                        }
+                    )
                     i += window
                     matched_phrase = True
                     break
@@ -448,56 +478,66 @@ class SignMatcher:
             if matched_phrase:
                 continue
 
-            match_result = self.match_token(tokens[i], use_semantic, threshold, use_llm=use_llm)
+            match_result = self.match_token(
+                tokens[i], use_semantic, threshold, use_llm=use_llm
+            )
             if match_result:
                 results.append(match_result)
             else:
-                results.append({
-                    'word': tokens[i],
-                    'match_type': 'no_match',
-                    'confidence': 0.0,
-                    'sign_data': None
-                })
+                results.append(
+                    {
+                        "word": tokens[i],
+                        "match_type": "no_match",
+                        "confidence": 0.0,
+                        "sign_data": None,
+                    }
+                )
             i += 1
 
         return results
 
-    def get_coverage_stats(self, tokens: List[str], use_semantic: bool = True,
-                          threshold: float = 0.6,
-                          use_llm: bool = False) -> Dict[str, Any]:
+    def get_coverage_stats(
+        self,
+        tokens: List[str],
+        use_semantic: bool = True,
+        threshold: float = 0.6,
+        use_llm: bool = False,
+    ) -> Dict[str, Any]:
         """Calculate coverage statistics for a list of tokens."""
-        results = self.match_tokens(tokens, use_semantic=use_semantic,
-                                    threshold=threshold, use_llm=use_llm)
+        results = self.match_tokens(
+            tokens, use_semantic=use_semantic, threshold=threshold, use_llm=use_llm
+        )
         total = len(tokens)
-        matched = sum(1 for r in results if r['match_type'] != 'no_match')
-        exact = sum(1 for r in results if r['match_type'] == 'exact')
-        fuzzy = sum(1 for r in results if r['match_type'] == 'fuzzy')
-        synonym = sum(1 for r in results if r['match_type'] == 'synonym')
-        semantic = sum(1 for r in results if r['match_type'] == 'semantic')
-        llm = sum(1 for r in results if r['match_type'] == 'llm')
+        matched = sum(1 for r in results if r["match_type"] != "no_match")
+        exact = sum(1 for r in results if r["match_type"] == "exact")
+        fuzzy = sum(1 for r in results if r["match_type"] == "fuzzy")
+        synonym = sum(1 for r in results if r["match_type"] == "synonym")
+        semantic = sum(1 for r in results if r["match_type"] == "semantic")
+        llm = sum(1 for r in results if r["match_type"] == "llm")
 
         return {
-            'total_tokens': total,
-            'matched_tokens': matched,
-            'unmatched_tokens': total - matched,
-            'coverage_rate': matched / total if total > 0 else 0,
-            'exact_matches': exact,
-            'fuzzy_matches': fuzzy,
-            'synonym_matches': synonym,
-            'semantic_matches': semantic,
-            'llm_matches': llm,
-            'match_breakdown': {
-                'exact': exact / total if total > 0 else 0,
-                'fuzzy': fuzzy / total if total > 0 else 0,
-                'synonym': synonym / total if total > 0 else 0,
-                'semantic': semantic / total if total > 0 else 0,
-                'llm': llm / total if total > 0 else 0,
-            }
+            "total_tokens": total,
+            "matched_tokens": matched,
+            "unmatched_tokens": total - matched,
+            "coverage_rate": matched / total if total > 0 else 0,
+            "exact_matches": exact,
+            "fuzzy_matches": fuzzy,
+            "synonym_matches": synonym,
+            "semantic_matches": semantic,
+            "llm_matches": llm,
+            "match_breakdown": {
+                "exact": exact / total if total > 0 else 0,
+                "fuzzy": fuzzy / total if total > 0 else 0,
+                "synonym": synonym / total if total > 0 else 0,
+                "semantic": semantic / total if total > 0 else 0,
+                "llm": llm / total if total > 0 else 0,
+            },
         }
 
 
 if __name__ == "__main__":
     import sys
+
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     logging.basicConfig(level=logging.INFO)
@@ -509,8 +549,17 @@ if __name__ == "__main__":
         wordnet_synonyms_path="data/synonyms/wordnet_synonyms.json",
     )
 
-    test_tokens = ["hello", "happy", "assist", "large", "home", "unknown_word",
-                   "halp", "exercize", "runing"]  # typos for fuzzy testing
+    test_tokens = [
+        "hello",
+        "happy",
+        "assist",
+        "large",
+        "home",
+        "unknown_word",
+        "halp",
+        "exercize",
+        "runing",
+    ]  # typos for fuzzy testing
     print("Testing Sign Matcher:")
     print("=" * 50)
 
@@ -520,9 +569,9 @@ if __name__ == "__main__":
             print(f"Token: '{token}' -> {result['match_type']} match")
             print(f"  Matched word: {result['word']}")
             print(f"  Confidence: {result['confidence']:.2f}")
-            if result.get('fuzzy_score'):
+            if result.get("fuzzy_score"):
                 print(f"  Fuzzy score: {result['fuzzy_score']:.0f}")
-            if result['sign_data']:
+            if result["sign_data"]:
                 print(f"  GLOSS: {result['sign_data'].get('gloss', 'N/A')}")
         else:
             print(f"Token: '{token}' -> No match found")
@@ -530,5 +579,7 @@ if __name__ == "__main__":
 
     stats = matcher.get_coverage_stats(test_tokens)
     print(f"\nCoverage: {stats['coverage_rate']:.2%}")
-    print(f"  Exact: {stats['exact_matches']}, Fuzzy: {stats['fuzzy_matches']}, "
-          f"Synonym: {stats['synonym_matches']}, Semantic: {stats['semantic_matches']}")
+    print(
+        f"  Exact: {stats['exact_matches']}, Fuzzy: {stats['fuzzy_matches']}, "
+        f"Synonym: {stats['synonym_matches']}, Semantic: {stats['semantic_matches']}"
+    )

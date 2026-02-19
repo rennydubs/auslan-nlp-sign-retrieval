@@ -10,10 +10,10 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-
 # ---------------------------------------------------------------------------
 # Shared / nested models
 # ---------------------------------------------------------------------------
+
 
 class MatchBreakdown(BaseModel):
     exact: float = 0.0
@@ -48,7 +48,7 @@ class SignData(BaseModel):
 
 class SignMatch(BaseModel):
     word: str
-    match_type: str          # exact | fuzzy | synonym | semantic | llm | no_match
+    match_type: str  # exact | fuzzy | synonym | semantic | llm | no_match
     confidence: float
     sign_data: Optional[SignData] = None
     matched_synonym: Optional[str] = None
@@ -77,6 +77,7 @@ class PhraseAnalysis(BaseModel):
 # ---------------------------------------------------------------------------
 # Request models
 # ---------------------------------------------------------------------------
+
 
 class ProcessOptions(BaseModel):
     remove_stops: bool = False
@@ -109,6 +110,7 @@ class SuggestionsRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Response models
 # ---------------------------------------------------------------------------
+
 
 class ProcessResponse(BaseModel):
     original_text: str

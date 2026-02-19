@@ -10,14 +10,15 @@ All methods degrade gracefully when Ollama is not installed or not running.
 
 import json
 import logging
-import urllib.request
 import urllib.error
+import urllib.request
 from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
 try:
     import ollama as _ollama_lib
+
     _OLLAMA_IMPORTABLE = True
 except ImportError:
     _ollama_lib = None  # type: ignore[assignment]
@@ -57,8 +58,7 @@ class LLMProcessor:
 
         if not _OLLAMA_IMPORTABLE:
             logger.warning(
-                "ollama package is not installed. "
-                "Install it with: pip install ollama"
+                "ollama package is not installed. Install it with: pip install ollama"
             )
             return
 
@@ -69,13 +69,10 @@ class LLMProcessor:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 if resp.status == 200:
                     self.available = True
-                    logger.info(
-                        "Ollama server reachable at %s. Model: %s", host, model
-                    )
+                    logger.info("Ollama server reachable at %s. Model: %s", host, model)
         except (urllib.error.URLError, OSError) as exc:
             logger.warning(
-                "Ollama server not reachable at %s: %s. "
-                "LLM fallback disabled.",
+                "Ollama server not reachable at %s: %s. LLM fallback disabled.",
                 host,
                 exc,
             )
@@ -119,6 +116,7 @@ class LLMProcessor:
         answer. We strip it so downstream JSON parsing sees clean output.
         """
         import re
+
         return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
 
     @staticmethod
@@ -230,7 +228,8 @@ class LLMProcessor:
         parsed = self._extract_json(raw or "")
         if parsed and isinstance(parsed.get("candidates"), list):
             candidates = [
-                w for w in parsed["candidates"]
+                w
+                for w in parsed["candidates"]
                 if isinstance(w, str) and w in dictionary_words
             ][:n]
             logger.debug("expand_query '%s' -> %s", token, candidates)
@@ -281,8 +280,7 @@ class LLMProcessor:
         parsed = self._extract_json(raw or "")
         if parsed and isinstance(parsed.get("sequence"), list):
             sequence = [
-                g for g in parsed["sequence"]
-                if isinstance(g, str) and g in all_glosses
+                g for g in parsed["sequence"] if isinstance(g, str) and g in all_glosses
             ]
             if sequence:
                 logger.debug(
@@ -295,9 +293,7 @@ class LLMProcessor:
         )
         return matched_glosses
 
-    def disambiguate(
-        self, token: str, context: str, candidates: List[str]
-    ) -> str:
+    def disambiguate(self, token: str, context: str, candidates: List[str]) -> str:
         """Pick the most contextually appropriate candidate for *token*.
 
         The LLM is asked to return JSON ``{"best": "<candidate>"}``.
@@ -338,9 +334,7 @@ class LLMProcessor:
         if parsed and isinstance(parsed.get("best"), str):
             best = parsed["best"].strip()
             if best in candidates:
-                logger.debug(
-                    "disambiguate '%s' in '%s' -> '%s'", token, context, best
-                )
+                logger.debug("disambiguate '%s' in '%s' -> '%s'", token, context, best)
                 return best
 
         logger.debug(
@@ -354,8 +348,8 @@ class LLMProcessor:
 # ------------------------------------------------------------------
 
 if __name__ == "__main__":
-    import sys
     import os
+    import sys
 
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     logging.basicConfig(level=logging.DEBUG)
@@ -365,8 +359,22 @@ if __name__ == "__main__":
     print(f"Model: {proc.model}  Host: {proc.host}")
 
     if proc.available:
-        dict_words = ["happy", "sad", "help", "need", "want", "exercise", "run",
-                      "walk", "eat", "drink", "home", "work", "good", "bad"]
+        dict_words = [
+            "happy",
+            "sad",
+            "help",
+            "need",
+            "want",
+            "exercise",
+            "run",
+            "walk",
+            "eat",
+            "drink",
+            "home",
+            "work",
+            "good",
+            "bad",
+        ]
 
         print("\n-- paraphrase --")
         result = proc.paraphrase("I require assistance with my workout", dict_words)

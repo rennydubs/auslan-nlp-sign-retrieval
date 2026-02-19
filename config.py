@@ -11,8 +11,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Data paths
 GLOSS_DICT_PATH = os.path.join(BASE_DIR, "data", "gloss", "auslan_dictionary.json")
 TARGET_WORDS_PATH = os.path.join(BASE_DIR, "data", "target_words.json")
-SYNONYM_MAPPING_PATH = os.path.join(BASE_DIR, "data", "synonyms", "synonym_mapping.json")
-WORDNET_SYNONYMS_PATH = os.path.join(BASE_DIR, "data", "synonyms", "wordnet_synonyms.json")
+SYNONYM_MAPPING_PATH = os.path.join(
+    BASE_DIR, "data", "synonyms", "synonym_mapping.json"
+)
+WORDNET_SYNONYMS_PATH = os.path.join(
+    BASE_DIR, "data", "synonyms", "wordnet_synonyms.json"
+)
 # Video directories — scraped videos go to SCRAPED_VIDEO_DIR (D: drive) to save
 # C: drive space.  The original 46 hand-curated videos stay in the repo.
 # The app checks both when serving.

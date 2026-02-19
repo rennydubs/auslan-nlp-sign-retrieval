@@ -37,9 +37,7 @@ try:
     from requests.adapters import HTTPAdapter
     from urllib3.util.retry import Retry
 except ImportError:
-    sys.exit(
-        "ERROR: 'requests' is not installed. Run: pip install requests>=2.31.0"
-    )
+    sys.exit("ERROR: 'requests' is not installed. Run: pip install requests>=2.31.0")
 
 try:
     from bs4 import BeautifulSoup
@@ -58,7 +56,9 @@ ROBOTS_URL = "https://auslan.org.au/robots.txt"
 # Signbank uses an A-Z search interface — each letter returns a paginated list
 # of sign detail pages at /dictionary/words/WORD-N.html
 SEARCH_LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-SEARCH_URL_TEMPLATE = "https://auslan.org.au/dictionary/search/?query={letter}&category="
+SEARCH_URL_TEMPLATE = (
+    "https://auslan.org.au/dictionary/search/?query={letter}&category="
+)
 
 USER_AGENT = (
     "AuslanNLPResearchBot/1.0 "
@@ -77,7 +77,9 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 DEFAULT_OUTPUT = os.path.join(PROJECT_ROOT, "data", "gloss", "signbank_scraped.json")
 MAIN_DICT_PATH = os.path.join(PROJECT_ROOT, "data", "gloss", "auslan_dictionary.json")
-BACKUP_DICT_PATH = os.path.join(PROJECT_ROOT, "data", "gloss", "auslan_dictionary_backup.json")
+BACKUP_DICT_PATH = os.path.join(
+    PROJECT_ROOT, "data", "gloss", "auslan_dictionary_backup.json"
+)
 # Download scraped videos to D: drive by default to save C: drive space.
 # Override with SCRAPED_VIDEO_DIR env var if needed.
 VIDEO_DIR = os.environ.get("SCRAPED_VIDEO_DIR", r"D:\nlp\auslan-videos")
@@ -96,6 +98,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # HTTP session
 # ---------------------------------------------------------------------------
+
 
 def build_session() -> requests.Session:
     """Return a requests Session with retry logic and the research User-Agent."""
@@ -116,6 +119,7 @@ def build_session() -> requests.Session:
 # ---------------------------------------------------------------------------
 # robots.txt check
 # ---------------------------------------------------------------------------
+
 
 def check_robots(session: requests.Session) -> urllib.robotparser.RobotFileParser:
     """
@@ -142,6 +146,7 @@ def is_allowed(rp: urllib.robotparser.RobotFileParser, url: str) -> bool:
 # ---------------------------------------------------------------------------
 # Sign list discovery
 # ---------------------------------------------------------------------------
+
 
 def _is_search_url(url: str) -> bool:
     """Return True if url points to the Signbank search endpoint."""
@@ -275,9 +280,9 @@ def _extract_pagination_urls(soup: BeautifulSoup, current_url: str) -> List[str]
 
         text = tag.get_text(strip=True).lower()
         # Accept links with pagination indicators or page= query params
-        if any(
-            indicator in text for indicator in ("next", "»", "›", ">")
-        ) or ("page=" in href):
+        if any(indicator in text for indicator in ("next", "»", "›", ">")) or (
+            "page=" in href
+        ):
             if abs_url not in urls:
                 urls.append(abs_url)
     return urls
@@ -286,6 +291,7 @@ def _extract_pagination_urls(soup: BeautifulSoup, current_url: str) -> List[str]
 # ---------------------------------------------------------------------------
 # Individual sign page parsing
 # ---------------------------------------------------------------------------
+
 
 def parse_sign_page(url: str, html: str) -> Optional[Dict]:
     """
@@ -405,7 +411,9 @@ def _extract_keywords(soup: BeautifulSoup, gloss: str) -> List[str]:
     # Strategy 1: element with id or class 'keywords' (Auslan Signbank pattern)
     # The actual site uses <div id="keywords"> containing:
     #   <p><strong>Keywords:</strong> <b>primary</b>, other1, other2</p>
-    kw_el = soup.find(attrs={"id": "keywords"}) or soup.find(attrs={"class": "keywords"})
+    kw_el = soup.find(attrs={"id": "keywords"}) or soup.find(
+        attrs={"class": "keywords"}
+    )
     if kw_el:
         text = kw_el.get_text(strip=True)
         # Strip the "Keywords:" prefix if present
@@ -419,9 +427,8 @@ def _extract_keywords(soup: BeautifulSoup, gloss: str) -> List[str]:
     # Strategy 2: a <ul>/<ol> or <div> labelled 'keyword-list' or 'translations'
     if not keywords:
         for selector in ("keyword-list", "translations"):
-            container = (
-                soup.find(attrs={"id": selector})
-                or soup.find(attrs={"class": selector})
+            container = soup.find(attrs={"id": selector}) or soup.find(
+                attrs={"class": selector}
             )
             if container:
                 for item in container.find_all(["li", "span", "a"]):
@@ -514,7 +521,7 @@ def _extract_description(soup: BeautifulSoup) -> Optional[str]:
             if not entries:
                 text = panel.get_text(strip=True)
                 if heading_text and text.startswith(heading_text):
-                    text = text[len(heading_text):].strip()
+                    text = text[len(heading_text) :].strip()
                 text = re.sub(r"^\d+\.\s*", "", text)
                 if text:
                     parts.append(text)
@@ -523,10 +530,7 @@ def _extract_description(soup: BeautifulSoup) -> Optional[str]:
 
     # Strategy 2: element with id or class matching common names
     for selector in ("definition", "description", "meaning", "sign-description"):
-        tag = (
-            soup.find(attrs={"id": selector})
-            or soup.find(attrs={"class": selector})
-        )
+        tag = soup.find(attrs={"id": selector}) or soup.find(attrs={"class": selector})
         if tag:
             text = tag.get_text(strip=True)
             if text:
@@ -609,10 +613,7 @@ def _infer_category(soup: BeautifulSoup, keywords: List[str]) -> str:
     """
     # Try to find an explicit topic/category label on the page
     for selector in ("topic", "category", "domain", "field"):
-        tag = (
-            soup.find(attrs={"id": selector})
-            or soup.find(attrs={"class": selector})
-        )
+        tag = soup.find(attrs={"id": selector}) or soup.find(attrs={"class": selector})
         if tag:
             text = tag.get_text(strip=True).lower()
             if text:
@@ -634,6 +635,7 @@ def _infer_category(soup: BeautifulSoup, keywords: List[str]) -> str:
 # ---------------------------------------------------------------------------
 # Video downloading
 # ---------------------------------------------------------------------------
+
 
 def download_video(
     session: requests.Session,
@@ -687,6 +689,7 @@ def download_video(
 # Scraper orchestration
 # ---------------------------------------------------------------------------
 
+
 def scrape(
     delay: float = 1.5,
     limit: Optional[int] = None,
@@ -719,7 +722,9 @@ def scrape(
         return {}
 
     if dry_run:
-        logger.info("[DRY RUN] Would scrape %d sign pages. No files written.", len(sign_urls))
+        logger.info(
+            "[DRY RUN] Would scrape %d sign pages. No files written.", len(sign_urls)
+        )
         for url in sign_urls[:20]:
             logger.info("  %s", url)
         if len(sign_urls) > 20:
@@ -745,13 +750,10 @@ def scrape(
 
     for i, url in enumerate(sign_urls, start=1):
         # Skip if we already have this entry (resume support)
-        id_gloss = os.path.splitext(os.path.basename(
-            urllib.parse.urlparse(url).path
-        ))[0].lower()
-        if any(
-            entry.get("id_gloss") == id_gloss
-            for entry in scraped.values()
-        ):
+        id_gloss = os.path.splitext(os.path.basename(urllib.parse.urlparse(url).path))[
+            0
+        ].lower()
+        if any(entry.get("id_gloss") == id_gloss for entry in scraped.values()):
             logger.debug("Already scraped %s — skipping.", url)
             continue
 
@@ -780,7 +782,8 @@ def scrape(
                             data["video_url"] = local_path
                         else:
                             logger.warning(
-                                "Video download failed for %s — keeping remote URL.", key
+                                "Video download failed for %s — keeping remote URL.",
+                                key,
                             )
             scraped.update(entry)
         else:
@@ -789,15 +792,19 @@ def scrape(
         # Progress report
         if i % 10 == 0 or i == len(sign_urls):
             logger.info(
-                "Progress: %d / %d pages processed, %d entries collected, "
-                "%d errors.",
-                i, len(sign_urls), len(scraped), len(errors),
+                "Progress: %d / %d pages processed, %d entries collected, %d errors.",
+                i,
+                len(sign_urls),
+                len(scraped),
+                len(errors),
             )
 
         # Incremental save
         if i % SAVE_INTERVAL == 0:
             _save_json(scraped, output_path)
-            logger.info("Incremental save: %d entries written to %s.", len(scraped), output_path)
+            logger.info(
+                "Incremental save: %d entries written to %s.", len(scraped), output_path
+            )
 
         time.sleep(delay)
 
@@ -805,7 +812,9 @@ def scrape(
     _save_json(scraped, output_path)
     logger.info(
         "Scrape complete. %d entries saved to %s. %d URLs failed.",
-        len(scraped), output_path, len(errors),
+        len(scraped),
+        output_path,
+        len(errors),
     )
 
     if errors:
@@ -823,6 +832,7 @@ def scrape(
 # ---------------------------------------------------------------------------
 # Dictionary merge
 # ---------------------------------------------------------------------------
+
 
 def merge(
     new_entries: Dict,
@@ -869,7 +879,8 @@ def merge(
 
     logger.info(
         "Merge complete: %d new entries added. Total dictionary size: %d.",
-        added, len(existing),
+        added,
+        len(existing),
     )
 
     _save_json(existing, main_path)
@@ -879,6 +890,7 @@ def merge(
 # ---------------------------------------------------------------------------
 # File I/O helpers
 # ---------------------------------------------------------------------------
+
 
 def _save_json(data: Dict, path: str) -> None:
     """Write data as formatted JSON, creating parent directories as needed."""
@@ -890,6 +902,7 @@ def _save_json(data: Dict, path: str) -> None:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(

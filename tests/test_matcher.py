@@ -109,7 +109,9 @@ class TestMatchTokens:
     def test_phrase_detection(self, matcher):
         # "goodbye" should be matched
         results = matcher.match_tokens(["say", "goodbye"], use_semantic=False)
-        assert any(r["word"] == "goodbye" for r in results if r["match_type"] != "no_match")
+        assert any(
+            r["word"] == "goodbye" for r in results if r["match_type"] != "no_match"
+        )
 
 
 class TestCoverageStats:
