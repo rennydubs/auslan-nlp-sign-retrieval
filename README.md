@@ -1,103 +1,147 @@
-# NLP-Powered Sign Retrieval System
+# NLP-Powered Auslan Sign Retrieval System
 
-## 🚀 Project Overview
+This system uses transformer models and NLP techniques to match natural language text to Auslan (Australian Sign Language) sign videos. It features a multi-strategy matching pipeline, sentiment/emotion analysis, and a modern web interface.
 
-This system leverages modern transformer models to provide intelligent Auslan sign retrieval with deep natural language understanding. Features include sentiment analysis, emotion detection, intelligent phrase matching, and context-aware sign selection.
+## Research Question
 
-### ✨ Key Features
+How can natural language processing be effectively applied to retrieve and display appropriate Auslan signs?
 
-- 🧠 **AI-Powered Analysis**: DistilBERT & RoBERTa transformer models
-- 📝 **Intelligent Phrase Matching**: Context-aware sign selection
-- 😊 **Emotion & Sentiment Detection**: Advanced psychological analysis
-- 🎯 **Intent Recognition**: Understands user goals and needs
-- 🌐 **Modern Web Interface**: Responsive design with dark mode
-- 🎥 **46 High-Quality Sign Videos**: Comprehensive vocabulary coverage
+## Quick Start
 
-## 🔬 Research Evolution
+### Backend
 
-**Original Question**: How can natural language processing be effectively applied to retrieve and display appropriate Auslan signs?
+```bash
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+
+# FastAPI backend (primary — used by the frontend)
+uvicorn api:app --reload --host 0.0.0.0 --port 8000
+
+# Or use the CLI directly
+python main.py "I feel happy"
+python main.py --test
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+# Open http://localhost:3000
+```
+
+### Docker
+
+```bash
+docker-compose up
+```
 
 ## Project Structure
 
 ```
-capstone/
-├── data/
-│   ├── gloss/
-│   │   ├── auslan_dictionary.json    # Main Auslan dictionary with sign data
-│   │   └── initial_gloss_dictionary.csv
-│   ├── synonyms/
-│   │   └── synonym_mapping.json      # Synonym to primary word mappings
-│   └── target_words.json             # Target words with synonyms
-├── media/
-│   ├── videos/                       # Sign language video files
-│   └── images/                       # Sign language image files
-├── src/
-│   ├── preprocessing.py              # Text preprocessing and cleaning
-│   └── matcher.py                    # Sign matching algorithms
-├── tests/                            # Test files
-├── docs/                             # Documentation
-├── main.py                           # Main application entry point
-└── README.md
+main.py                # AuslanSignSystem orchestrator (framework-agnostic)
+api.py                 # FastAPI REST backend (primary)
+app.py                 # Flask web app (legacy)
+evaluate.py            # Evaluation and benchmarking script
+src/
+  preprocessing.py     # TextPreprocessor — lowercasing, contractions, tokenization
+  matcher.py           # SignMatcher — exact/synonym/semantic matching pipeline
+  phrase_matcher.py    # IntelligentPhraseMatcher — spaCy phrase segmentation, grammar reordering
+  nlp_features.py      # EnhancedNLPProcessor — sentiment, emotion, NER, intent analysis
+scripts/
+  scraper.py           # Auslan dictionary scraper
+frontend/              # Next.js 14 + React 18 + Tailwind CSS
+  app/                 # Pages (home, about)
+  components/          # SearchBar, SignCard, SignResults, NLPAnalysis, Navbar, etc.
+tests/                 # pytest suite (175 tests)
+  test_api.py          # FastAPI endpoint tests
+  test_matcher.py      # SignMatcher tests
+  test_phrase_matcher.py
+  test_preprocessing.py
+data/
+  gloss/auslan_dictionary.json   # 46-sign dictionary (gloss, video URL, synonyms, category)
+  synonyms/synonym_mapping.json  # Synonym-to-primary mappings
+  target_words.json              # Target words with synonym arrays
+media/videos/          # 46 .mp4 sign videos (Git LFS)
+templates/             # Jinja2 templates (Flask legacy)
+.github/workflows/ci.yml  # CI pipeline
 ```
 
-## 📚 Vocabulary Coverage (46 Signs)
+## Matching Pipeline
 
-Expanded from 16 to **46 comprehensive signs** across multiple domains:
+Signs are matched in priority order:
 
-### 👋 **Greetings & Social (7 signs)**
-`hello`, `goodbye`, `thank`, `please`, `good`, `friend`, `see`
+1. **Exact match** — direct dictionary key lookup (100% confidence)
+2. **Synonym match** — dictionary synonyms + external mappings (90% confidence)
+3. **Semantic match** — `all-MiniLM-L6-v2` cosine similarity against pre-computed embeddings (confidence = similarity score)
 
-### 🏃‍♂️ **Fitness & Exercise (15 signs)**
-`exercise`, `strong`, `muscle`, `weight`, `lift`, `stretch`, `breathe`, `rest`, `warm`, `cool`, `run`, `bike`, `chest`, `arms`, `legs`
+The `use_synonym` parameter (default `True`) controls whether synonym matching is enabled. The system gracefully degrades when ML dependencies are unavailable, falling back to lexicon-based approaches.
 
-### 🍎 **Basic Needs (6 signs)**
-`eat`, `drink`, `sleep`, `help`, `food`, `water`
+## AI/ML Models
 
-### 🎭 **Emotions (3 signs)**
-`happy`, `sad`, `angry`
+| Model | Purpose |
+|-------|---------|
+| `all-MiniLM-L6-v2` | Semantic similarity (384-dim embeddings) |
+| `distilbert-base-uncased-finetuned-sst-2-english` | Sentiment analysis |
+| `j-hartmann/emotion-english-distilroberta-base` | 7-class emotion detection |
+| spaCy `en_core_web_sm` | NER, dependency parsing, phrase extraction |
 
-### 🏃 **Actions (6 signs)**
-`go`, `come`, `sit`, `stand`, `walk`, `buy`
+## API Endpoints (FastAPI)
 
-### 📍 **Places & Objects (4 signs)**
-`house`, `toilet`, `big`, `speak`
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/models/status` | Model availability |
+| `POST` | `/api/process` | Process text, return sign matches + NLP analysis |
+| `POST` | `/api/evaluate` | Batch evaluation |
+| `POST` | `/api/analyze` | NLP analysis only |
+| `POST` | `/api/suggestions` | Phrase autocomplete |
+| `GET` | `/api/dictionary` | Dictionary info |
+| `GET` | `/media/videos/{filename}` | Serve sign videos |
 
-### ⏰ **Temporal & Descriptive (5 signs)**
-`today`, `tomorrow`, `time`, `many`, `more`
+## Vocabulary (46 Signs)
 
-## 🛠️ Technical Architecture
+| Category | Signs |
+|----------|-------|
+| Greetings & Social (7) | hello, goodbye, thank, please, good, friend, see |
+| Fitness & Exercise (15) | exercise, strong, muscle, weight, lift, stretch, breathe, rest, warm, cool, run, bike, chest, arms, legs |
+| Basic Needs (6) | eat, drink, sleep, help, food, water |
+| Emotions (3) | happy, sad, angry |
+| Actions (6) | go, come, sit, stand, walk, buy |
+| Places & Objects (4) | house, toilet, big, speak |
+| Temporal & Descriptive (5) | today, tomorrow, time, many, more |
 
-### Core Technologies
-- **Language**: Python 3.8+
-- **Web Framework**: Flask with responsive Bootstrap 5
-- **Platform**: GitHub with automated deployments
+## CLI Flags
 
-### 🤖 AI/ML Models Stack
+Applies to `main.py` and `evaluate.py`:
 
-#### Primary NLP Models
-1. **Semantic Similarity**: `all-MiniLM-L6-v2` (SentenceTransformers)
-   - Advanced semantic understanding
-   - Context-aware matching
-   - 384-dimensional embeddings
+- `--no-stops` — remove stop words
+- `--no-semantic` — disable semantic matching
+- `--stem` — enable Porter stemming
+- `--thresh=0.6` — semantic similarity threshold (0.0-1.0)
 
-2. **Sentiment Analysis**: `distilbert-base-uncased-finetuned-sst-2-english`
-   - Transformer-based sentiment detection
-   - Fine-tuned on Stanford Sentiment Treebank
-   - 99.7% accuracy on validation set
+## Testing
 
-3. **Emotion Classification**: `j-hartmann/emotion-english-distilroberta-base`
-   - 7-class emotion detection (joy, sadness, anger, fear, surprise, disgust, neutral)
-   - RoBERTa-based architecture
-   - Fine-tuned on emotion datasets
+```bash
+pytest tests/ -v --tb=short -x
+```
 
-4. **Named Entity Recognition**: spaCy `en_core_web_sm`
-   - Real-time entity extraction
-   - Support for temporal, person, location entities
-   - Grammar and dependency parsing
+175 tests covering the API, matcher, phrase matcher, and preprocessing. Tests use mocks — no ML model downloads needed.
 
-#### Matching Strategies
-- **Exact Match**: Direct dictionary lookup
-- **Synonym Matching**: Comprehensive synonym mapping
-- **Semantic Matching**: Transformer-based similarity
-- **Intelligent Phrase Matching**: Context and grammar-aware
-- **Grammar-Optimized Ordering**: ASL/Auslan structure compliance
+## CI Pipeline
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on push to `main` and PRs:
+
+- **Backend lint** — `ruff check` + `ruff format --check`
+- **Backend tests** — `pytest` (no ML models)
+- **Frontend lint** — ESLint (`next/core-web-vitals`) + TypeScript type check
+
+## Tech Stack
+
+- **Backend**: Python 3.11+, FastAPI, spaCy, HuggingFace Transformers, SentenceTransformers
+- **Frontend**: Next.js 14, React 18, Tailwind CSS, Framer Motion, Radix UI, shadcn/ui
+- **Legacy**: Flask + Jinja2 (`app.py`)
+- **Testing**: pytest, httpx
+- **Linting**: ruff (Python), ESLint + TypeScript (frontend)
+- **Infrastructure**: Docker, GitHub Actions CI
