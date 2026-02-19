@@ -1,0 +1,333 @@
+{
+  "hello": {
+    "gloss": "HELLO",
+    "category": "greeting",
+    "video_url": "media/videos/hello.mp4",
+    "description": "Open palm waved side to side at shoulder height",
+    "synonyms": ["hi", "greetings", "hey"]
+  },
+  "goodbye": {
+    "gloss": "GOODBYE",
+    "category": "greeting",
+    "video_url": "media/videos/goodbye.mp4",
+    "description": "Hand waved palm facing away from body",
+    "synonyms": ["bye", "farewell", "see you later"]
+  },
+  "thank": {
+    "gloss": "THANK-YOU",
+    "category": "greeting",
+    "video_url": "media/videos/thank.mp4",
+    "description": "Hand moves from chin outward toward recipient",
+    "synonyms": ["thanks", "appreciate", "grateful"]
+  },
+  "please": {
+    "gloss": "PLEASE",
+    "category": "greeting",
+    "video_url": "media/videos/please.mp4",
+    "description": "Open palm circled on chest area",
+    "difficulty": "beginner",
+    "synonyms": ["kindly", "if you would"]
+  },
+  "eat": {
+    "gloss": "EAT",
+    "category": "basic_needs",
+    "video_url": "media/videos/eat.mp4",
+    "description": "Fingers bunched together, moved to mouth repeatedly",
+    "synonyms": ["consume", "meal", "food", "dine"]
+  },
+  "drink": {
+    "gloss": "DRINK",
+    "category": "basic_needs",
+    "video_url": "media/videos/drink.mp4",
+    "description": "C-hand shape moved to mouth, tilting motion",
+    "synonyms": ["beverage", "hydrate", "sip"]
+  },
+  "sleep": {
+    "gloss": "SLEEP",
+    "category": "basic_needs",
+    "video_url": "media/videos/sleep.mp4",
+    "description": "Hand placed beside tilted head, eyes closed gesture",
+    "synonyms": ["rest", "nap", "slumber"]
+  },
+  "help": {
+    "gloss": "HELP",
+    "category": "basic_needs",
+    "video_url": "media/videos/help.mp4",
+    "description": "Flat hand supports fist of other hand, lifting motion",
+    "synonyms": ["assist", "aid", "support", "assistance"]
+  },
+  "go": {
+    "gloss": "GO",
+    "category": "actions",
+    "video_url": "media/videos/go.mp4",
+    "description": "Index finger points and moves away from body",
+    "difficulty": "beginner",
+    "synonyms": ["leave", "depart", "move"]
+  },
+  "come": {
+    "gloss": "COME",
+    "category": "actions",
+    "video_url": "media/videos/come.mp4",
+    "description": "Index finger beckons toward body",
+    "synonyms": ["approach", "arrive", "toward"]
+  },
+  "sit": {
+    "gloss": "SIT",
+    "category": "actions",
+    "video_url": "media/videos/sit.mp4",
+    "description": "Two fingers bent, placed on flat hand representing sitting",
+    "synonyms": ["seated", "chair"]
+  },
+  "stand": {
+    "gloss": "STAND",
+    "category": "actions",
+    "video_url": "media/videos/stand.mp4",
+    "description": "Two fingers straight up on flat palm",
+    "synonyms": ["standing", "upright"]
+  },
+  "walk": {
+    "gloss": "WALK",
+    "category": "actions",
+    "video_url": "media/videos/walk.mp4",
+    "description": "Two hands alternating forward stepping motion",
+    "synonyms": ["walking", "step", "stroll"]
+  },
+  "happy": {
+    "gloss": "HAPPY",
+    "category": "emotions",
+    "video_url": "media/videos/happy.mp4",
+    "description": "Open hands move upward with bright facial expression",
+    "synonyms": ["glad", "joyful", "pleased", "content"]
+  },
+  "sad": {
+    "gloss": "SAD",
+    "category": "emotions",
+    "video_url": "media/videos/sad.mp4",
+    "description": "Open hands move downward with sad facial expression",
+    "synonyms": ["unhappy", "upset", "depressed", "down"]
+  },
+  "angry": {
+    "gloss": "ANGRY",
+    "category": "emotions",
+    "video_url": "media/videos/angry.mp4",
+    "description": "Claw hands pull down from face with angry expression",
+    "synonyms": ["mad", "furious", "upset", "annoyed"]
+  },
+  "today": {
+    "gloss": "TODAY",
+    "category": "time",
+    "video_url": "media/videos/today.mp4",
+    "description": "Flat hands move downward together in front of body",
+    "synonyms": ["now", "current day"]
+  },
+  "tomorrow": {
+    "gloss": "TOMORROW",
+    "category": "time",
+    "video_url": "media/videos/tomorrow.mp4",
+    "description": "Flat hand moves forward and down from body",
+    "synonyms": ["next day", "following day"]
+  },
+  "big": {
+    "gloss": "BIG",
+    "category": "descriptive",
+    "video_url": "media/videos/big.mp4",
+    "description": "Hands spread wide apart to show large size",
+    "synonyms": ["large", "huge", "enormous"]
+  },
+  "buy": {
+    "gloss": "BUY",
+    "category": "actions",
+    "video_url": "media/videos/buy.mp4",
+    "description": "Hand motion representing exchange of money",
+    "synonyms": ["purchase", "acquire", "shop"]
+  },
+  "friend": {
+    "gloss": "FRIEND",
+    "category": "social",
+    "video_url": "media/videos/friend.mp4",
+    "description": "Index fingers hook together representing friendship",
+    "synonyms": ["buddy", "pal", "companion"]
+  },
+  "good": {
+    "gloss": "GOOD",
+    "category": "descriptive",
+    "video_url": "media/videos/good.mp4",
+    "description": "Thumbs up gesture with positive expression",
+    "synonyms": ["great", "excellent", "fine"]
+  },
+  "house": {
+    "gloss": "HOUSE",
+    "category": "places",
+    "video_url": "media/videos/house.mp4",
+    "description": "Hands form roof shape over head",
+    "synonyms": ["home", "residence", "building"]
+  },
+  "see": {
+    "gloss": "SEE",
+    "category": "actions",
+    "video_url": "media/videos/see.mp4",
+    "description": "V-hand moves from eyes outward",
+    "synonyms": ["look", "watch", "observe"]
+  },
+  "speak": {
+    "gloss": "SPEAK",
+    "category": "communication",
+    "video_url": "media/videos/speak.mp4",
+    "description": "Index finger moves from mouth outward",
+    "synonyms": ["talk", "say", "communicate"]
+  },
+  "toilet": {
+    "gloss": "TOILET",
+    "category": "places",
+    "video_url": "media/videos/toilet.mp4",
+    "description": "T-hand shape shaken at side of body",
+    "synonyms": ["bathroom", "restroom", "loo"]
+  },
+  "exercise": {
+    "gloss": "EXERCISE",
+    "category": "fitness_core",
+    "video_url": "media/videos/exercise.mp4",
+    "description": "Fists alternating up and down, mimicking physical activity",
+    "synonyms": ["workout", "fitness", "training", "physical activity"]
+  },
+  "strong": {
+    "gloss": "STRONG",
+    "category": "fitness_core",
+    "video_url": "media/videos/strong.mp4",
+    "description": "Strong flexing motion with both arms",
+    "synonyms": ["strength", "powerful", "muscular", "fit"]
+  },
+  "muscle": {
+    "gloss": "MUSCLE",
+    "category": "fitness_anatomy",
+    "video_url": "media/videos/muscle.mp4",
+    "description": "Flexing bicep with opposite hand indicating muscle",
+    "synonyms": ["muscles", "bicep", "strength"]
+  },
+  "weight": {
+    "gloss": "WEIGHT",
+    "category": "fitness_equipment",
+    "video_url": "media/videos/weight.mp4",
+    "description": "Both hands gripping and lifting heavy object",
+    "synonyms": ["weights", "dumbbell", "barbell"]
+  },
+  "lift": {
+    "gloss": "LIFT",
+    "category": "fitness_actions",
+    "video_url": "media/videos/lift.mp4",
+    "description": "Both hands gripping and lifting upward motion",
+    "synonyms": ["lifting", "raise", "hoist"]
+  },
+  "stretch": {
+    "gloss": "STRETCH",
+    "category": "fitness_actions",
+    "video_url": "media/videos/stretch.mp4",
+    "description": "Arms extending and stretching in various directions",
+    "synonyms": ["stretching", "extend", "flexibility"]
+  },
+  "breathe": {
+    "gloss": "BREATHE",
+    "category": "fitness_actions",
+    "video_url": "media/videos/breathe.mp4",
+    "description": "Hand on chest with inhaling and exhaling motion",
+    "synonyms": ["breathing", "inhale", "exhale"]
+  },
+  "rest": {
+    "gloss": "REST",
+    "category": "fitness_actions",
+    "video_url": "media/videos/rest.mp4",
+    "description": "Hands placed together beside head indicating rest",
+    "synonyms": ["break", "pause", "recover"]
+  },
+  "chest": {
+    "gloss": "CHEST",
+    "category": "fitness_anatomy",
+    "video_url": "media/videos/chest.mp4",
+    "description": "Both hands indicating chest area",
+    "synonyms": ["pectorals", "pecs"]
+  },
+  "back": {
+    "gloss": "BACK",
+    "category": "fitness_anatomy",
+    "video_url": "media/videos/back.mp4",
+    "description": "Hand reaching over shoulder to indicate back",
+    "synonyms": ["spine", "shoulders"]
+  },
+  "legs": {
+    "gloss": "LEGS",
+    "category": "fitness_anatomy",
+    "video_url": "media/videos/legs.mp4",
+    "description": "Both hands indicating leg area",
+    "synonyms": ["leg", "thighs", "quads"]
+  },
+  "arms": {
+    "gloss": "ARMS",
+    "category": "fitness_anatomy",
+    "video_url": "media/videos/arms.mp4",
+    "description": "Both hands indicating arm muscles",
+    "synonyms": ["arm", "biceps", "triceps"]
+  },
+  "warm": {
+    "gloss": "WARM-UP",
+    "category": "fitness_actions",
+    "video_url": "media/videos/warm.mp4",
+    "description": "Hands rubbing together then stretching",
+    "synonyms": ["warm-up", "warmup", "prepare"]
+  },
+  "cool": {
+    "gloss": "COOL-DOWN",
+    "category": "fitness_actions",
+    "video_url": "media/videos/cool.mp4",
+    "description": "Hands fanning and slowing down motion",
+    "synonyms": ["cool-down", "cooldown", "recovery"]
+  },
+  "run": {
+    "gloss": "RUN",
+    "category": "fitness_cardio",
+    "video_url": "media/videos/run.mp4",
+    "description": "Arms alternating in running motion",
+    "synonyms": ["running", "jog", "sprint"]
+  },
+  "bike": {
+    "gloss": "BIKE",
+    "category": "fitness_equipment",
+    "video_url": "media/videos/bike.mp4",
+    "description": "Hands gripping handlebars with pedaling motion",
+    "synonyms": ["bicycle", "cycling", "spin"]
+  },
+  "water": {
+    "gloss": "WATER",
+    "category": "fitness_health",
+    "video_url": "media/videos/water.mp4",
+    "description": "Motion to mouth indicating drinking",
+    "synonyms": ["drink", "hydration", "fluid", "hydrate"]
+  },
+  "food": {
+    "gloss": "FOOD",
+    "category": "basic_needs",
+    "video_url": "media/videos/food.mp4",
+    "description": "Fingers bunched together moving to mouth, representing eating",
+    "synonyms": ["meal", "nutrition", "nourishment", "sustenance"]
+  },
+  "many": {
+    "gloss": "MANY",
+    "category": "descriptive",
+    "video_url": "media/videos/many.mp4",
+    "description": "Hands opening and closing repeatedly showing abundance",
+    "synonyms": ["lots", "plenty", "much", "numerous"]
+  },
+  "more": {
+    "gloss": "MORE",
+    "category": "descriptive",
+    "video_url": "media/videos/more.mp4",
+    "description": "Fingertips of both hands brought together repeatedly",
+    "synonyms": ["additional", "extra", "further", "increased"]
+  },
+  "time": {
+    "gloss": "TIME",
+    "category": "temporal",
+    "video_url": "media/videos/time.mp4",
+    "description": "Index finger tapping on wrist indicating watch/time",
+    "synonyms": ["clock", "hour", "moment", "duration"]
+  }
+}

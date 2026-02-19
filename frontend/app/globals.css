@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/* Base resets                                                         */
+/* ------------------------------------------------------------------ */
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-zinc-950 text-zinc-100;
+    min-height: 100dvh;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-indigo-500/60 ring-offset-2 ring-offset-zinc-950;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Component layer                                                     */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .glass {
+    @apply border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl;
+  }
+
+  .glass-strong {
+    @apply border border-white/[0.08] bg-white/[0.06] backdrop-blur-2xl;
+  }
+
+  .card {
+    @apply rounded-2xl border border-zinc-800/60 bg-zinc-900/50 backdrop-blur-sm;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .confidence-bar {
+    @apply h-1.5 w-full overflow-hidden rounded-full bg-zinc-800;
+  }
+  .confidence-bar-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+  }
+
+  .glow-border {
+    @apply transition-shadow duration-300;
+  }
+  .glow-border:focus-within {
+    box-shadow: 0 0 0 1px hsl(224 76% 48% / 0.5),
+                0 0 15px hsl(224 76% 48% / 0.15),
+                0 0 30px hsl(224 76% 48% / 0.05);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Utility layer                                                       */
+/* ------------------------------------------------------------------ */
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #4f46e5 100%);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(240 3.7% 25%) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(240 3.7% 25%);
+    border-radius: 3px;
+  }
+}

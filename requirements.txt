@@ -1,18 +1,37 @@
 # Core dependencies
 numpy>=2.3
 nltk>=3.8.1
+rapidfuzz>=3.0
+
+# Web framework — FastAPI replaces Flask; keep Flask for legacy app.py
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
 flask>=3.0
 
 # Enhanced NLP and Transformer Models
-sentence-transformers>=3.0  # For semantic similarity (DistilBERT)
+sentence-transformers>=3.0  # For semantic similarity
 transformers>=4.21.0        # For DistilBERT sentiment and RoBERTa emotion
-torch>=1.13.0              # PyTorch backend for transformers
-spacy>=3.4.0               # For NER, POS tagging, dependency parsing
-textblob>=0.17.1           # For basic sentiment analysis fallback
+torch>=1.13.0               # PyTorch backend for transformers
+spacy>=3.4.0                # For NER, POS tagging, lemmatization
+textblob>=0.17.1            # For basic sentiment analysis fallback
+
+# LLM (optional — only needed if Ollama is running locally)
+ollama>=0.2.0
+
+# Scraper (Phase 4)
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# Testing
+pytest>=8.0
+pytest-asyncio>=0.23.0      # async test support
+anyio>=4.0                  # async backend for pytest-asyncio
+httpx>=0.27.0               # AsyncClient for FastAPI testing
 
 # Model downloads (run after installation):
 # python -m spacy download en_core_web_sm
+# python -c "import nltk; nltk.download('wordnet'); nltk.download('omw-1.4')"
 # Models will auto-download on first use:
 # - distilbert-base-uncased-finetuned-sst-2-english (sentiment)
 # - j-hartmann/emotion-english-distilroberta-base (emotion)
-# - all-MiniLM-L6-v2 (semantic similarity)
+# - intfloat/e5-base-v2 (semantic similarity, default)

@@ -194,16 +194,10 @@ $(document).ready(function() {
     });
 
     // Example buttons
-    $(document).on('click', '.example-btn', function(e) {
+    $(document).on('click', '.example-link', function(e) {
         e.preventDefault();
-        const text = $(this).data('text');
+        const text = $(this).text().trim();
         $('#textInput').val(text).focus();
-        // Optional: auto-submit after a short delay
-        setTimeout(() => {
-            if ($('#textInput').val() === text) {
-                processText();
-            }
-        }, 500);
     });
 
     // Clear button

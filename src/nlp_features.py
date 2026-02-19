@@ -3,71 +3,26 @@ Enhanced NLP features for Auslan sign retrieval system.
 Includes sentiment analysis, named entity recognition, and context understanding.
 """
 
+import logging
 import re
-import json
 from typing import List, Dict, Any, Tuple, Optional
-from collections import defaultdict, Counter
+from collections import defaultdict
 from dataclasses import dataclass
-import math
 
+logger = logging.getLogger(__name__)
+
+# Check library availability at import time (no model loading)
 try:
     import spacy
     from textblob import TextBlob
     from sentence_transformers import SentenceTransformer
-    from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+    from transformers import pipeline
     import torch
     NLP_ENHANCED = True
-
-    # Try to load spaCy model
-    try:
-        nlp = spacy.load("en_core_web_sm")
-    except OSError:
-        print("Note: spaCy model not found. Some advanced features may be limited.")
-        nlp = None
-
-    # Load transformer models
-    try:
-        # DistilBERT for semantic similarity (same as existing matcher)
-        semantic_model = SentenceTransformer('all-MiniLM-L6-v2')
-        print("Loaded all-MiniLM-L6-v2 for semantic similarity")
-
-        # DistilBERT for sentiment analysis (more accurate than TextBlob)
-        sentiment_model = pipeline(
-            "sentiment-analysis",
-            model="distilbert-base-uncased-finetuned-sst-2-english",
-            tokenizer="distilbert-base-uncased-finetuned-sst-2-english"
-        )
-        print("Loaded DistilBERT for sentiment analysis")
-
-        # RoBERTa for emotion classification
-        try:
-            emotion_model = pipeline(
-                "text-classification",
-                model="j-hartmann/emotion-english-distilroberta-base",
-                tokenizer="j-hartmann/emotion-english-distilroberta-base"
-            )
-            print("Loaded DistilRoBERTa for emotion classification")
-            EMOTION_MODEL_AVAILABLE = True
-        except Exception as e:
-            print(f"Note: Advanced emotion model not available: {e}")
-            emotion_model = None
-            EMOTION_MODEL_AVAILABLE = False
-
-    except ImportError as e:
-        print(f"Note: Transformer models not available: {e}")
-        semantic_model = None
-        sentiment_model = None
-        emotion_model = None
-        EMOTION_MODEL_AVAILABLE = False
-
 except ImportError:
-    print("Note: Advanced NLP libraries not installed. Using basic NLP features.")
     NLP_ENHANCED = False
-    nlp = None
-    semantic_model = None
-    sentiment_model = None
-    emotion_model = None
-    EMOTION_MODEL_AVAILABLE = False
+    logger.info("Advanced NLP libraries not installed. Using basic NLP features.")
+
 
 @dataclass
 class NLPAnalysis:
@@ -83,18 +38,56 @@ class NLPAnalysis:
     complexity_score: float
     readability_score: float
 
+
 class EnhancedNLPProcessor:
     """
     Advanced NLP processor with sentiment analysis, entity recognition,
     and context understanding capabilities.
+
+    Models are loaded lazily on first use inside __init__, not at module import.
+    A shared semantic model can be injected to avoid duplicate loading.
     """
 
-    def __init__(self):
-        """Initialize the NLP processor with models and dictionaries."""
-        self.nlp = nlp
-        self.semantic_model = semantic_model
-        self.sentiment_model = sentiment_model
-        self.emotion_model = emotion_model
+    def __init__(self, spacy_model_name: str = "en_core_web_sm",
+                 sentiment_model_name: str = "distilbert-base-uncased-finetuned-sst-2-english",
+                 emotion_model_name: str = "j-hartmann/emotion-english-distilroberta-base",
+                 shared_semantic_model=None):
+        """Initialize the NLP processor, loading models lazily."""
+        self.nlp = None
+        self.semantic_model = shared_semantic_model
+        self.sentiment_model = None
+        self.emotion_model = None
+        self._nlp_enhanced = NLP_ENHANCED
+
+        if NLP_ENHANCED:
+            # Load spaCy
+            try:
+                self.nlp = spacy.load(spacy_model_name)
+                logger.info("Loaded spaCy model: %s", spacy_model_name)
+            except OSError:
+                logger.warning("spaCy model '%s' not found. Some features limited.", spacy_model_name)
+
+            # Load sentiment model
+            try:
+                self.sentiment_model = pipeline(
+                    "sentiment-analysis",
+                    model=sentiment_model_name,
+                    tokenizer=sentiment_model_name,
+                )
+                logger.info("Loaded sentiment model: %s", sentiment_model_name)
+            except Exception as e:
+                logger.warning("Sentiment model not available: %s", e)
+
+            # Load emotion model
+            try:
+                self.emotion_model = pipeline(
+                    "text-classification",
+                    model=emotion_model_name,
+                    tokenizer=emotion_model_name,
+                )
+                logger.info("Loaded emotion model: %s", emotion_model_name)
+            except Exception as e:
+                logger.warning("Emotion model not available: %s", e)
 
         # Emotion lexicon for fine-grained emotion detection
         self.emotion_lexicon = {
@@ -108,7 +101,7 @@ class EnhancedNLPProcessor:
             'anticipation': ['excited', 'eager', 'hopeful', 'optimistic']
         }
 
-        # Intent patterns for fitness/coaching context
+        # Intent patterns
         self.intent_patterns = {
             'instruction': [
                 r'\b(do|perform|execute|practice|try)\b',
@@ -152,34 +145,13 @@ class EnhancedNLPProcessor:
         }
 
     def analyze_text(self, text: str) -> NLPAnalysis:
-        """
-        Perform comprehensive NLP analysis on input text.
-
-        Args:
-            text (str): Input text to analyze
-
-        Returns:
-            NLPAnalysis: Comprehensive analysis results
-        """
-        # Basic sentiment analysis
+        """Perform comprehensive NLP analysis on input text."""
         sentiment_score, sentiment_label, confidence = self._analyze_sentiment(text)
-
-        # Named entity recognition
         entities = self._extract_entities(text)
-
-        # Key phrase extraction
         key_phrases = self._extract_key_phrases(text)
-
-        # Intent detection
         intent = self._detect_intent(text)
-
-        # Emotion detection
         emotion = self._detect_emotion(text)
-
-        # Formality level
         formality_level = self._assess_formality(text)
-
-        # Complexity and readability
         complexity_score = self._calculate_complexity(text)
         readability_score = self._calculate_readability(text)
 
@@ -197,139 +169,98 @@ class EnhancedNLPProcessor:
         )
 
     def _analyze_sentiment(self, text: str) -> Tuple[float, str, float]:
-        """
-        Analyze sentiment using DistilBERT transformer model with TextBlob fallback.
-
-        Returns:
-            Tuple of (sentiment_score, sentiment_label, confidence)
-        """
-        # Try DistilBERT first (most accurate)
-        if self.sentiment_model and NLP_ENHANCED:
+        """Analyze sentiment using DistilBERT with TextBlob and lexicon fallbacks."""
+        # Try DistilBERT first
+        if self.sentiment_model:
             try:
                 result = self.sentiment_model(text)[0]
-                label = result['label'].lower()  # 'positive' or 'negative'
+                label = result['label'].lower()
                 confidence = result['score']
-
-                # Convert to sentiment score (-1 to 1)
-                if label == 'positive':
-                    sentiment_score = confidence
-                else:  # negative
-                    sentiment_score = -confidence
-
-                # Map labels for consistency
-                if label in ['positive', 'negative']:
-                    final_label = label
-                else:
-                    final_label = 'neutral'
-
-                print(f"DistilBERT Sentiment: {final_label} (score: {sentiment_score:.3f}, confidence: {confidence:.3f})")
+                sentiment_score = confidence if label == 'positive' else -confidence
+                final_label = label if label in ('positive', 'negative') else 'neutral'
+                logger.debug("Sentiment: %s (%.3f, conf=%.3f)", final_label, sentiment_score, confidence)
                 return sentiment_score, final_label, confidence
-
             except Exception as e:
-                print(f"DistilBERT sentiment analysis failed: {e}")
+                logger.warning("DistilBERT sentiment failed: %s", e)
 
         # Fallback to TextBlob
-        if NLP_ENHANCED:
+        if self._nlp_enhanced:
             try:
+                from textblob import TextBlob
                 blob = TextBlob(text)
-                polarity = blob.sentiment.polarity  # -1 to 1
-                subjectivity = blob.sentiment.subjectivity  # 0 to 1
-
-                # Convert to label
+                polarity = blob.sentiment.polarity
+                subjectivity = blob.sentiment.subjectivity
                 if polarity > 0.1:
                     label = 'positive'
                 elif polarity < -0.1:
                     label = 'negative'
                 else:
                     label = 'neutral'
-
-                # Use subjectivity as confidence indicator
-                confidence = subjectivity
-
-                return polarity, label, confidence
-
+                return polarity, label, subjectivity
             except Exception as e:
-                print(f"TextBlob analysis failed: {e}")
+                logger.warning("TextBlob analysis failed: %s", e)
 
-        # Final fallback to lexicon-based sentiment analysis
         return self._lexicon_sentiment(text)
 
     def _lexicon_sentiment(self, text: str) -> Tuple[float, str, float]:
         """Lexicon-based sentiment analysis fallback."""
-        positive_words = [
+        positive_words = {
             'good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic',
             'happy', 'joy', 'love', 'like', 'awesome', 'perfect', 'best'
-        ]
-        negative_words = [
+        }
+        negative_words = {
             'bad', 'terrible', 'awful', 'horrible', 'hate', 'dislike',
             'sad', 'angry', 'upset', 'disappointed', 'frustrated', 'worst'
-        ]
+        }
 
         words = text.lower().split()
-        positive_count = sum(1 for word in words if word in positive_words)
-        negative_count = sum(1 for word in words if word in negative_words)
-
-        total_sentiment_words = positive_count + negative_count
-
-        if total_sentiment_words == 0:
+        if not words:
             return 0.0, 'neutral', 0.5
 
-        sentiment_score = (positive_count - negative_count) / len(words)
-        confidence = total_sentiment_words / len(words)
+        positive_count = sum(1 for word in words if word in positive_words)
+        negative_count = sum(1 for word in words if word in negative_words)
+        total = positive_count + negative_count
 
-        if sentiment_score > 0:
-            label = 'positive'
-        elif sentiment_score < 0:
-            label = 'negative'
-        else:
-            label = 'neutral'
+        if total == 0:
+            return 0.0, 'neutral', 0.5
 
-        return sentiment_score, label, min(confidence, 1.0)
+        score = (positive_count - negative_count) / len(words)
+        confidence = min(total / len(words), 1.0)
+        label = 'positive' if score > 0 else ('negative' if score < 0 else 'neutral')
+        return score, label, confidence
 
     def _extract_entities(self, text: str) -> List[Dict[str, Any]]:
         """Extract named entities from text."""
-        entities = []
-
         if self.nlp:
             try:
                 doc = self.nlp(text)
-                for ent in doc.ents:
-                    entities.append({
+                return [
+                    {
                         'text': ent.text,
                         'label': ent.label_,
                         'start': ent.start_char,
                         'end': ent.end_char,
-                        'description': spacy.explain(ent.label_) if hasattr(spacy, 'explain') else ent.label_
-                    })
-                return entities
+                        'description': spacy.explain(ent.label_) or ent.label_
+                    }
+                    for ent in doc.ents
+                ]
             except Exception as e:
-                print(f"spaCy entity extraction failed: {e}")
+                logger.warning("spaCy entity extraction failed: %s", e)
 
-        # Fallback to pattern-based entity extraction
         return self._pattern_entity_extraction(text)
 
     def _pattern_entity_extraction(self, text: str) -> List[Dict[str, Any]]:
         """Pattern-based entity extraction fallback."""
         entities = []
-
-        # Time expressions
-        time_patterns = [
+        patterns = [
             (r'\b(today|tomorrow|yesterday)\b', 'TIME'),
             (r'\b(\d{1,2}:\d{2})\b', 'TIME'),
             (r'\b(morning|afternoon|evening|night)\b', 'TIME'),
-            (r'\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b', 'DATE')
+            (r'\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b', 'DATE'),
+            (r'\b(arms?|legs?|chest|back|shoulders?|muscles?)\b', 'BODY_PART'),
         ]
-
-        # Body parts (relevant for fitness)
-        body_patterns = [
-            (r'\b(arms?|legs?|chest|back|shoulders?|muscles?)\b', 'BODY_PART')
-        ]
-
-        all_patterns = time_patterns + body_patterns
-
-        for pattern, label in all_patterns:
-            matches = re.finditer(pattern, text, re.IGNORECASE)
-            for match in matches:
+        for pattern, label in patterns:
+            for match in re.finditer(pattern, text, re.IGNORECASE):
                 entities.append({
                     'text': match.group(),
                     'label': label,
@@ -337,7 +268,6 @@ class EnhancedNLPProcessor:
                     'end': match.end(),
                     'description': label.replace('_', ' ').title()
                 })
-
         return entities
 
     def _extract_key_phrases(self, text: str) -> List[str]:
@@ -345,251 +275,145 @@ class EnhancedNLPProcessor:
         if self.nlp:
             try:
                 doc = self.nlp(text)
-                # Extract noun phrases and important verb phrases
                 phrases = []
-
-                # Noun phrases
                 for chunk in doc.noun_chunks:
-                    if len(chunk.text.split()) > 1:  # Multi-word phrases
+                    if len(chunk.text.split()) > 1:
                         phrases.append(chunk.text)
-
-                # Important verb phrases (verb + object)
                 for token in doc:
                     if token.pos_ == 'VERB':
-                        # Get verb and its direct objects/complements
-                        verb_phrase_parts = [token.text]
+                        parts = [token.text]
                         for child in token.children:
                             if child.dep_ in ['dobj', 'attr', 'prep']:
-                                verb_phrase_parts.append(child.text)
-
-                        if len(verb_phrase_parts) > 1:
-                            phrases.append(' '.join(verb_phrase_parts))
-
-                return list(set(phrases))  # Remove duplicates
-
+                                parts.append(child.text)
+                        if len(parts) > 1:
+                            phrases.append(' '.join(parts))
+                return list(set(phrases))
             except Exception as e:
-                print(f"Key phrase extraction failed: {e}")
+                logger.warning("Key phrase extraction failed: %s", e)
 
-        # Fallback to simple n-gram extraction
-        return self._simple_phrase_extraction(text)
-
-    def _simple_phrase_extraction(self, text: str) -> List[str]:
-        """Simple phrase extraction fallback."""
+        # Fallback: simple n-grams
         words = text.lower().split()
         phrases = []
-
-        # Extract 2-grams and 3-grams
         for i in range(len(words) - 1):
-            bigram = ' '.join(words[i:i+2])
-            phrases.append(bigram)
-
+            phrases.append(' '.join(words[i:i + 2]))
             if i < len(words) - 2:
-                trigram = ' '.join(words[i:i+3])
-                phrases.append(trigram)
-
+                phrases.append(' '.join(words[i:i + 3]))
         return phrases
 
     def _detect_intent(self, text: str) -> str:
         """Detect the intent/purpose of the text."""
         text_lower = text.lower()
-
         intent_scores = defaultdict(int)
-
         for intent, patterns in self.intent_patterns.items():
             for pattern in patterns:
-                matches = len(re.findall(pattern, text_lower))
-                intent_scores[intent] += matches
-
+                intent_scores[intent] += len(re.findall(pattern, text_lower))
         if not intent_scores:
-            return 'statement'  # Default intent
-
-        # Return the intent with the highest score
+            return 'statement'
         return max(intent_scores.items(), key=lambda x: x[1])[0]
 
     def _detect_emotion(self, text: str) -> str:
-        """Detect fine-grained emotions using DistilRoBERTa transformer model."""
-        # Try DistilRoBERTa emotion model first (most accurate)
-        if self.emotion_model and EMOTION_MODEL_AVAILABLE:
+        """Detect fine-grained emotions using DistilRoBERTa with lexicon fallback."""
+        if self.emotion_model:
             try:
                 result = self.emotion_model(text)[0]
                 emotion = result['label'].lower()
-                confidence = result['score']
-
-                print(f"DistilRoBERTa Emotion: {emotion} (confidence: {confidence:.3f})")
-
-                # Map model outputs to our emotion categories
-                emotion_mapping = {
-                    'joy': 'joy',
-                    'sadness': 'sadness',
-                    'anger': 'anger',
-                    'fear': 'fear',
-                    'surprise': 'surprise',
-                    'disgust': 'disgust',
-                    'love': 'joy',  # Map love to joy
-                    'optimism': 'anticipation',
-                    'pessimism': 'sadness'
+                logger.debug("Emotion: %s (conf=%.3f)", emotion, result['score'])
+                mapping = {
+                    'joy': 'joy', 'sadness': 'sadness', 'anger': 'anger',
+                    'fear': 'fear', 'surprise': 'surprise', 'disgust': 'disgust',
+                    'neutral': 'neutral',
                 }
-
-                return emotion_mapping.get(emotion, emotion)
-
+                return mapping.get(emotion, emotion)
             except Exception as e:
-                print(f"DistilRoBERTa emotion detection failed: {e}")
+                logger.warning("Emotion detection failed: %s", e)
 
-        # Fallback to lexicon-based emotion detection
-        text_lower = text.lower()
-        words = text_lower.split()
-
-        emotion_scores = defaultdict(int)
-
+        # Lexicon fallback
+        words = text.lower().split()
+        scores = defaultdict(int)
         for emotion, emotion_words in self.emotion_lexicon.items():
             for word in words:
                 if word in emotion_words:
-                    emotion_scores[emotion] += 1
-
-        if not emotion_scores:
+                    scores[emotion] += 1
+        if not scores:
             return 'neutral'
-
-        # Return the emotion with the highest score
-        return max(emotion_scores.items(), key=lambda x: x[1])[0]
+        return max(scores.items(), key=lambda x: x[1])[0]
 
     def _assess_formality(self, text: str) -> str:
         """Assess the formality level of the text."""
         text_lower = text.lower()
-
-        formal_count = sum(1 for word in self.formality_indicators['formal']
-                          if word in text_lower)
-        informal_count = sum(1 for word in self.formality_indicators['informal']
-                            if word in text_lower)
-
-        # Consider punctuation and structure
-        if '?' in text or '!' in text:
-            informal_count += 1
-
-        if formal_count > informal_count:
+        formal = sum(1 for w in self.formality_indicators['formal'] if w in text_lower)
+        informal = sum(1 for w in self.formality_indicators['informal'] if w in text_lower)
+        if formal > informal:
             return 'formal'
-        elif informal_count > formal_count:
+        elif informal > formal:
             return 'informal'
-        else:
-            return 'neutral'
+        return 'neutral'
 
     def _calculate_complexity(self, text: str) -> float:
         """Calculate text complexity score (0-1)."""
         words = text.split()
         sentences = re.split(r'[.!?]+', text)
-
         if not words:
             return 0.0
-
-        # Average word length
-        avg_word_length = sum(len(word) for word in words) / len(words)
-
-        # Average sentence length
-        avg_sentence_length = len(words) / max(len(sentences), 1)
-
-        # Complexity based on word and sentence length
-        complexity = (avg_word_length / 10.0 + avg_sentence_length / 20.0) / 2
-
-        return min(complexity, 1.0)
+        avg_word_len = sum(len(w) for w in words) / len(words)
+        avg_sent_len = len(words) / max(len(sentences), 1)
+        return min((avg_word_len / 10.0 + avg_sent_len / 20.0) / 2, 1.0)
 
     def _calculate_readability(self, text: str) -> float:
         """Calculate readability score using Flesch Reading Ease formula."""
         words = text.split()
         sentences = re.split(r'[.!?]+', text)
         syllables = self._count_syllables(text)
-
         if not words or not sentences:
-            return 0.5  # Default medium readability
-
-        avg_sentence_length = len(words) / len(sentences)
-        avg_syllables_per_word = syllables / len(words)
-
-        # Simplified Flesch Reading Ease (scaled to 0-1)
-        flesch_score = 206.835 - (1.015 * avg_sentence_length) - (84.6 * avg_syllables_per_word)
-
-        # Normalize to 0-1 scale (higher = more readable)
-        normalized_score = max(0, min(100, flesch_score)) / 100
-
-        return normalized_score
+            return 0.5
+        avg_sent_len = len(words) / len(sentences)
+        avg_syl_per_word = syllables / len(words)
+        flesch = 206.835 - (1.015 * avg_sent_len) - (84.6 * avg_syl_per_word)
+        return max(0, min(100, flesch)) / 100
 
     def _count_syllables(self, text: str) -> int:
         """Count syllables in text (approximate)."""
         vowels = 'aeiouy'
-        syllable_count = 0
+        total_syllables = 0
 
         for word in text.lower().split():
             word = re.sub(r'[^a-z]', '', word)
             if not word:
                 continue
-
-            # Count vowel groups
+            word_syllables = 0
             prev_was_vowel = False
             for char in word:
                 is_vowel = char in vowels
                 if is_vowel and not prev_was_vowel:
-                    syllable_count += 1
+                    word_syllables += 1
                 prev_was_vowel = is_vowel
+            if word.endswith('e') and word_syllables > 1:
+                word_syllables -= 1
+            total_syllables += max(word_syllables, 1)
 
-            # Adjust for silent 'e'
-            if word.endswith('e') and syllable_count > 1:
-                syllable_count -= 1
-
-            # Every word has at least one syllable
-            if syllable_count == 0:
-                syllable_count = 1
-
-        return syllable_count
+        return total_syllables
 
     def generate_context_aware_suggestions(self, analysis: NLPAnalysis,
                                          available_signs: List[str]) -> List[str]:
-        """
-        Generate context-aware suggestions based on NLP analysis.
-
-        Args:
-            analysis: NLP analysis results
-            available_signs: List of available sign words
-
-        Returns:
-            List of contextually relevant suggestions
-        """
+        """Generate context-aware suggestions based on NLP analysis."""
         suggestions = []
 
-        # Intent-based suggestions
         if analysis.intent == 'greeting':
-            greetings = [sign for sign in available_signs
-                        if sign in ['hello', 'goodbye', 'thank', 'please']]
-            suggestions.extend(greetings)
-
+            suggestions.extend(s for s in available_signs if s in ['hello', 'goodbye', 'thank', 'please'])
         elif analysis.intent == 'instruction':
-            actions = [sign for sign in available_signs
-                      if sign in ['do', 'try', 'start', 'go', 'come']]
-            suggestions.extend(actions)
-
+            suggestions.extend(s for s in available_signs if s in ['do', 'try', 'start', 'go', 'come'])
         elif analysis.intent == 'request':
-            helpers = [sign for sign in available_signs
-                      if sign in ['help', 'please', 'need', 'want']]
-            suggestions.extend(helpers)
+            suggestions.extend(s for s in available_signs if s in ['help', 'please', 'need', 'want'])
 
-        # Emotion-based suggestions
-        if analysis.emotion in ['joy', 'happiness']:
-            positive_signs = [sign for sign in available_signs
-                            if sign in ['happy', 'good', 'excellent']]
-            suggestions.extend(positive_signs)
+        if analysis.emotion == 'joy':
+            suggestions.extend(s for s in available_signs if s in ['happy', 'good', 'excellent'])
+        elif analysis.emotion in ('sadness', 'anger'):
+            suggestions.extend(s for s in available_signs if s in ['sad', 'angry', 'help'])
 
-        elif analysis.emotion in ['sadness', 'anger']:
-            emotion_signs = [sign for sign in available_signs
-                           if sign in ['sad', 'angry', 'help']]
-            suggestions.extend(emotion_signs)
-
-        # Entity-based suggestions
         for entity in analysis.entities:
             if entity['label'] == 'TIME':
-                time_signs = [sign for sign in available_signs
-                            if sign in ['today', 'tomorrow', 'time']]
-                suggestions.extend(time_signs)
-
+                suggestions.extend(s for s in available_signs if s in ['today', 'tomorrow', 'time'])
             elif entity['label'] == 'BODY_PART':
-                body_signs = [sign for sign in available_signs
-                            if sign in ['arms', 'legs', 'chest', 'muscle']]
-                suggestions.extend(body_signs)
+                suggestions.extend(s for s in available_signs if s in ['arms', 'legs', 'chest', 'muscle'])
 
-        return list(set(suggestions))  # Remove duplicates
+        return list(set(suggestions))

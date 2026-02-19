@@ -6,10 +6,15 @@ Tests coverage and performance across different matching strategies.
 
 import argparse
 import json
+import logging
 import sys
 import time
 from datetime import datetime
+
+import config
 from main import AuslanSignSystem
+
+logger = logging.getLogger(__name__)
 
 
 def parse_flags(argv):
@@ -24,7 +29,7 @@ def parse_flags(argv):
                         help='Disable semantic matching')
     parser.add_argument('--stem', action='store_true',
                         help='Enable word stemming')
-    parser.add_argument('--thresh', type=float, default=0.6,
+    parser.add_argument('--thresh', type=float, default=config.DEFAULT_SEMANTIC_THRESHOLD,
                         help='Semantic matching threshold (0.0-1.0)')
     parser.add_argument('--export', type=str, default=None,
                         help='Export results to JSON file (e.g., results.json)')
@@ -42,61 +47,57 @@ def run_evaluation(argv=None):
         argv = sys.argv[1:]
     remove_stops, use_semantic, semantic_threshold, use_stemming, export_path, use_synonym = parse_flags(argv)
 
-    # Start timing
     start_time = time.time()
 
-    # Initialize system
     system = AuslanSignSystem()
-    
+
     # Fitness coaching test scenarios
     workout_instructions = [
         "Do three sets of ten squats",
         "Warm up before lifting weights",
-        "Focus on your chest and arms today", 
+        "Focus on your chest and arms today",
         "Remember to breathe during each exercise"
     ]
-    
+
     fitness_goals = [
         "Build muscle and get strong",
         "Exercise regularly to stay fit",
         "Stretch after every workout session",
         "Drink water and eat protein daily"
     ]
-    
+
     training_guidance = [
         "Keep your back straight during squats",
         "Rest between sets for good form",
         "Run on the treadmill for cardio",
         "Cool down with stretching exercises"
     ]
-    
-    # Combine all test sets
+
     all_test_sets = {
         "Workout Instructions": workout_instructions,
-        "Fitness Goals": fitness_goals, 
+        "Fitness Goals": fitness_goals,
         "Training Guidance": training_guidance
     }
-    
-    print("Fitness Coach Auslan Translator - Comprehensive Evaluation")
-    print("=" * 60)
-    
+
+    logger.info("Fitness Coach Auslan Translator - Comprehensive Evaluation")
+    logger.info("=" * 60)
+
     overall_results = {}
-    
+
     for category, test_texts in all_test_sets.items():
-        print(f"\n{category.upper()}:")
-        print("-" * 40)
-        
+        logger.info("\n%s:", category.upper())
+        logger.info("-" * 40)
+
         evaluation = system.batch_evaluation(
             test_texts,
             remove_stops=remove_stops,
             use_semantic=use_semantic,
             semantic_threshold=semantic_threshold,
             use_stemming=use_stemming,
-            use_synonym=use_synonym,
         )
         overall_results[category] = evaluation
-        
-        print(f"Average coverage: {evaluation['average_coverage']:.1%}")
+
+        logger.info("Average coverage: %.1f%%", evaluation['average_coverage'] * 100)
 
         # Detailed breakdown
         total_exact = sum(r['coverage_stats']['exact_matches'] for r in evaluation['individual_results'])
@@ -104,33 +105,29 @@ def run_evaluation(argv=None):
         total_semantic = sum(r['coverage_stats']['semantic_matches'] for r in evaluation['individual_results'])
         total_tokens = sum(r['total_tokens'] for r in evaluation['individual_results'])
 
-        print(f"Total tokens processed: {total_tokens}")
+        logger.info("Total tokens processed: %d", total_tokens)
         if total_tokens > 0:
-            print(f"Exact matches: {total_exact} ({total_exact/total_tokens:.1%})")
-            print(f"Synonym matches: {total_synonym} ({total_synonym/total_tokens:.1%})")
-            print(f"Semantic matches: {total_semantic} ({total_semantic/total_tokens:.1%})")
+            logger.info("Exact matches: %d (%.1f%%)", total_exact, total_exact / total_tokens * 100)
+            logger.info("Synonym matches: %d (%.1f%%)", total_synonym, total_synonym / total_tokens * 100)
+            logger.info("Semantic matches: %d (%.1f%%)", total_semantic, total_semantic / total_tokens * 100)
         else:
-            print("No tokens to process in this category")
-    
+            logger.info("No tokens to process in this category")
+
     # Overall statistics
     all_coverages = [result['average_coverage'] for result in overall_results.values()]
     overall_avg = sum(all_coverages) / len(all_coverages) if all_coverages else 0
 
-    # End timing
-    end_time = time.time()
-    elapsed_time = end_time - start_time
+    elapsed_time = time.time() - start_time
 
-    print(f"\n{'OVERALL PERFORMANCE'}")
-    print("=" * 60)
-    print(f"Average coverage across all categories: {overall_avg:.1%}")
+    logger.info("\nOVERALL PERFORMANCE")
+    logger.info("=" * 60)
+    logger.info("Average coverage across all categories: %.1f%%", overall_avg * 100)
 
-    # Performance by category
-    print(f"\nPerformance by category:")
+    logger.info("\nPerformance by category:")
     for category, result in overall_results.items():
-        print(f"  {category}: {result['average_coverage']:.1%}")
+        logger.info("  %s: %.1f%%", category, result['average_coverage'] * 100)
 
-    # Timing information
-    print(f"\nEvaluation completed in {elapsed_time:.2f} seconds")
+    logger.info("\nEvaluation completed in %.2f seconds", elapsed_time)
 
     # Prepare export data
     export_data = {
@@ -148,62 +145,61 @@ def run_evaluation(argv=None):
         'category_results': overall_results
     }
 
-    # Export results if requested
     if export_path:
         try:
             with open(export_path, 'w', encoding='utf-8') as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
-            print(f"\nResults exported to: {export_path}")
+            logger.info("Results exported to: %s", export_path)
         except Exception as e:
-            print(f"\nError exporting results: {e}")
+            logger.error("Error exporting results: %s", e)
 
     return overall_results
+
 
 def test_semantic_vs_exact(argv=None):
     """Compare semantic matching vs exact/synonym matching."""
     if argv is None:
         argv = sys.argv[1:]
     _, _, semantic_threshold, use_stemming, _, _ = parse_flags(argv)
-    
+
     system = AuslanSignSystem()
-    
+
     test_phrases = [
-        "I require assistance",  # Should match "help" via semantic
-        "Purchase some food",    # Should match "buy" via semantic  
-        "Large building",        # Should match "big" and "house" via semantic
-        "Pleased to meet you",   # Should match "happy" via semantic
-        "Communicate with me"    # Should match "speak" via semantic
+        "I require assistance",   # Should match "help" via semantic
+        "Purchase some food",     # Should match "buy" via semantic
+        "Large building",         # Should match "big" and "house" via semantic
+        "Pleased to meet you",    # Should match "happy" via semantic
+        "Communicate with me"     # Should match "speak" via semantic
     ]
-    
-    print("\nSemantic Matching Comparison:")
-    print("=" * 40)
-    
+
+    logger.info("\nSemantic Matching Comparison:")
+    logger.info("=" * 40)
+
     for phrase in test_phrases:
-        print(f"\nPhrase: \"{phrase}\"")
-        
-        # Test without semantic
+        logger.info("\nPhrase: \"%s\"", phrase)
+
         results_no_semantic = system.process_input(phrase, use_semantic=False, use_stemming=use_stemming)
         coverage_no_semantic = results_no_semantic['coverage_stats']['coverage_rate']
-        
-        # Test with semantic
-        results_with_semantic = system.process_input(phrase, use_semantic=True, semantic_threshold=semantic_threshold, use_stemming=use_stemming)
+
+        results_with_semantic = system.process_input(
+            phrase, use_semantic=True, semantic_threshold=semantic_threshold, use_stemming=use_stemming
+        )
         coverage_with_semantic = results_with_semantic['coverage_stats']['coverage_rate']
-        
-        print(f"  Without semantic: {coverage_no_semantic:.1%}")
-        print(f"  With semantic: {coverage_with_semantic:.1%}")
-        print(f"  Improvement: {(coverage_with_semantic - coverage_no_semantic):.1%}")
+
+        logger.info("  Without semantic: %.1f%%", coverage_no_semantic * 100)
+        logger.info("  With semantic: %.1f%%", coverage_with_semantic * 100)
+        logger.info("  Improvement: %.1f%%", (coverage_with_semantic - coverage_no_semantic) * 100)
+
 
 if __name__ == "__main__":
-    # Run main evaluation
-    results = run_evaluation(sys.argv[1:])
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(levelname)s: %(message)s'
+    )
 
-    # Test semantic matching
+    results = run_evaluation(sys.argv[1:])
     test_semantic_vs_exact(sys.argv[1:])
 
-    print("\n" + "=" * 60)
-    print("Evaluation Complete! All project requirements met.")
-    print("System successfully implements advanced NLP capabilities:")
-    print("  • Transformer-based semantic matching")
-    print("  • Multi-strategy sign retrieval")
-    print("  • Comprehensive evaluation framework")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("Evaluation Complete!")
+    logger.info("=" * 60)

@@ -1,0 +1,183 @@
+# ============================================================
+# Auslan Sign Retrieval System — docker-compose.yml
+# ============================================================
+# Services:
+#   backend  — FastAPI (Python) on port 8000
+#   frontend — Next.js on port 3000
+#   ollama   — Local LLM server on port 11434
+#
+# Quick start:
+#   docker-compose up --build
+#
+# GPU support (requires nvidia-container-toolkit):
+#   docker-compose --profile gpu up --build
+#
+# Without GPU (CPU-only fallback):
+#   docker-compose up --build
+#
+# Run only backend + ollama (no frontend):
+#   docker-compose up backend ollama
+#
+# Environment overrides:
+#   Create a .env file in this directory, e.g.:
+#     SECRET_KEY=my-production-secret
+#     OLLAMA_HOST=http://ollama:11434
+#     LLM_MODEL=llama3.2:3b
+# ============================================================
+
+version: "3.9"
+
+# ----------------------------------------------------------------
+# Shared network
+# ----------------------------------------------------------------
+networks:
+  auslan_net:
+    driver: bridge
+
+# ----------------------------------------------------------------
+# Named volumes — persistent storage
+# ----------------------------------------------------------------
+volumes:
+  ollama_data:
+    # Ollama models (~4-8 GB) — persisted across container restarts
+  embedding_cache:
+    # Pre-computed sentence-transformer embeddings (.npy files)
+  model_cache:
+    # HuggingFace / sentence-transformers model weights
+
+# ----------------------------------------------------------------
+# Services
+# ----------------------------------------------------------------
+services:
+
+  # ----------------------------------------------------------
+  # Ollama — local LLM inference server
+  # ----------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: auslan_ollama
+    restart: unless-stopped
+    networks:
+      - auslan_net
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    # GPU profile — attach only when nvidia-container-toolkit is installed
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+  # ----------------------------------------------------------
+  # Model puller — downloads the LLM on first run
+  # ----------------------------------------------------------
+  ollama_puller:
+    image: ollama/ollama:latest
+    container_name: auslan_ollama_puller
+    networks:
+      - auslan_net
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: >
+      sh -c "
+        echo 'Pulling qwen3:8b model (this may take several minutes)...' &&
+        ollama pull qwen3:8b &&
+        echo 'Model ready.'
+      "
+    restart: "no"
+
+  # ----------------------------------------------------------
+  # Backend — FastAPI application
+  # ----------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: auslan-backend:latest
+    container_name: auslan_backend
+    restart: unless-stopped
+    networks:
+      - auslan_net
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist embedding cache so model doesn't re-encode on every restart
+      - embedding_cache:/app/.cache
+      # Persist HuggingFace model weights across builds
+      - model_cache:/root/.cache/huggingface
+      # Mount local media directory (sign videos)
+      - ./media:/app/media:ro
+      # Mount data directory (dictionary, synonyms) — allows hot-reloading
+      - ./data:/app/data:ro
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-auslan-sign-system-dev}
+      - OLLAMA_HOST=http://ollama:11434
+      - LLM_MODEL=${LLM_MODEL:-qwen3:8b}
+      - FLASK_DEBUG=false
+      - PYTHONUNBUFFERED=1
+      - SENTENCE_TRANSFORMERS_HOME=/app/.cache/sentence_transformers
+    depends_on:
+      ollama:
+        condition: service_healthy
+    # GPU support for sentence-transformers inference acceleration
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s   # Allow extra time for model loading on first run
+      retries: 5
+
+  # ----------------------------------------------------------
+  # Frontend — Next.js application
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
+    image: auslan-frontend:latest
+    container_name: auslan_frontend
+    restart: unless-stopped
+    networks:
+      - auslan_net
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - NODE_ENV=production
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3

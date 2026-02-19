@@ -1,0 +1,105 @@
+# ============================================================
+# Auslan Sign Retrieval — GitHub Actions CI
+# ============================================================
+# Runs on every push to main and every pull request.
+# Jobs:
+#   lint-backend    — ruff linting + type check
+#   test-backend    — pytest (no ML models loaded)
+#   lint-frontend   — eslint + tsc type check
+# ============================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Cancel in-progress runs for the same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ----------------------------------------------------------------
+  # Backend: lint
+  # ----------------------------------------------------------------
+  lint-backend:
+    name: "Backend — lint (ruff)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Run ruff check
+        run: ruff check . --select E,F,W,I --ignore E501
+
+      - name: Run ruff format check
+        run: ruff format --check .
+
+  # ----------------------------------------------------------------
+  # Backend: tests
+  # ----------------------------------------------------------------
+  test-backend:
+    name: "Backend — pytest"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install core dependencies (no heavy ML)
+        run: |
+          pip install pytest httpx pytest-asyncio anyio
+          pip install rapidfuzz nltk numpy
+          # Minimal installs — tests use mocks, not real models
+          pip install fastapi pydantic
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short -x
+        env:
+          # Ensure no model downloads are attempted in CI
+          TRANSFORMERS_OFFLINE: "1"
+          HF_DATASETS_OFFLINE: "1"
+
+  # ----------------------------------------------------------------
+  # Frontend: lint + type check
+  # ----------------------------------------------------------------
+  lint-frontend:
+    name: "Frontend — lint + tsc"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --frozen-lockfile
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit

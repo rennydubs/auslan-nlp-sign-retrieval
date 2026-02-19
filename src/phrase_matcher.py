@@ -3,28 +3,22 @@ Advanced phrase matching system with NLP features for Auslan sign retrieval.
 Implements intelligent phrase segmentation, context analysis, and sign ordering.
 """
 
-import re
 import json
-from typing import List, Dict, Any, Tuple, Optional
+import logging
+import re
 from collections import defaultdict
-import spacy
 from dataclasses import dataclass
+from typing import List, Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 try:
     import spacy
-    from spacy import displacy
-    NLP_AVAILABLE = True
-    # Download the model if not available
-    try:
-        nlp = spacy.load("en_core_web_sm")
-    except OSError:
-        print("Downloading spaCy English model...")
-        spacy.cli.download("en_core_web_sm")
-        nlp = spacy.load("en_core_web_sm")
+    SPACY_AVAILABLE = True
 except ImportError:
-    NLP_AVAILABLE = False
-    print("Warning: spaCy not available. Advanced NLP features disabled.")
-    nlp = None
+    SPACY_AVAILABLE = False
+    logger.info("spaCy not available. Advanced NLP features disabled.")
+
 
 @dataclass
 class PhraseMatch:
@@ -37,22 +31,33 @@ class PhraseMatch:
     entities: List[Dict[str, Any]]
     grammar_structure: str
 
+
 class IntelligentPhraseMatcher:
     """
     Advanced phrase matching system that understands context, grammar, and semantics.
     """
 
-    def __init__(self, gloss_dict_path: str, target_words_path: str):
+    def __init__(self, gloss_dict_path: str, target_words_path: str,
+                 sign_matcher=None, spacy_model_name: str = "en_core_web_sm"):
         """Initialize the phrase matcher with dictionaries and NLP models."""
         self.gloss_dict = self._load_dictionary(gloss_dict_path)
         self.target_words = self._load_target_words(target_words_path)
-        self.nlp = nlp if NLP_AVAILABLE else None
+        self.matcher = sign_matcher  # SignMatcher instance for semantic matching
+
+        # Load spaCy lazily
+        self.nlp = None
+        if SPACY_AVAILABLE:
+            try:
+                self.nlp = spacy.load(spacy_model_name)
+                logger.info("Phrase matcher loaded spaCy model: %s", spacy_model_name)
+            except OSError:
+                logger.warning("spaCy model '%s' not found for phrase matcher.", spacy_model_name)
 
         # Define common phrase patterns for sign language
         self.phrase_patterns = {
             'greeting': ['hello', 'hi', 'good morning', 'good afternoon', 'goodbye', 'bye'],
             'question': ['how', 'what', 'where', 'when', 'why', 'who'],
-            'instruction': ['please', 'do', 'can you', 'let\'s', 'try to'],
+            'instruction': ['please', 'do', 'can you', "let's", 'try to'],
             'request': ['need', 'want', 'help', 'please'],
             'fitness_command': ['warm up', 'cool down', 'lift', 'exercise', 'stretch', 'breathe'],
             'emotional': ['happy', 'sad', 'angry', 'excited', 'tired'],
@@ -73,7 +78,7 @@ class IntelligentPhraseMatcher:
             with open(path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except FileNotFoundError:
-            print(f"Warning: Dictionary file not found at {path}")
+            logger.warning("Dictionary file not found at %s", path)
             return {}
 
     def _load_target_words(self, path: str) -> Dict[str, List[str]]:
@@ -86,7 +91,7 @@ class IntelligentPhraseMatcher:
                     word_dict[item['word']] = item['synonyms']
                 return word_dict
         except FileNotFoundError:
-            print(f"Warning: Target words file not found at {path}")
+            logger.warning("Target words file not found at %s", path)
             return {}
 
     def analyze_phrase(self, text: str) -> Dict[str, Any]:
@@ -94,7 +99,7 @@ class IntelligentPhraseMatcher:
         Perform comprehensive NLP analysis on the input phrase.
 
         Args:
-            text (str): Input text to analyze
+            text: Input text to analyze
 
         Returns:
             Dict containing analysis results
@@ -111,7 +116,6 @@ class IntelligentPhraseMatcher:
         }
 
         if not self.nlp:
-            # Fallback to basic analysis without spaCy
             return self._basic_analysis(text)
 
         doc = self.nlp(text)
@@ -126,11 +130,10 @@ class IntelligentPhraseMatcher:
             for ent in doc.ents
         ]
 
-        # Sentiment Analysis (basic)
+        # Sentiment Analysis (basic lexicon)
         sentiment_indicators = {
             'positive': ['happy', 'good', 'great', 'excellent', 'love', 'like', 'wonderful'],
             'negative': ['sad', 'bad', 'terrible', 'hate', 'angry', 'upset', 'painful'],
-            'neutral': []
         }
 
         text_lower = text.lower()
@@ -144,7 +147,7 @@ class IntelligentPhraseMatcher:
             analysis['phrase_type'] = 'question'
         elif any(word in text_lower for word in ['please', 'can you', 'could you']):
             analysis['phrase_type'] = 'request'
-        elif any(word in text_lower for word in ['do', 'let\'s', 'try']):
+        elif any(word in text_lower for word in ['do', "let's", 'try']):
             analysis['phrase_type'] = 'instruction'
         elif any(word in text_lower for word in self.phrase_patterns['greeting']):
             analysis['phrase_type'] = 'greeting'
@@ -179,7 +182,6 @@ class IntelligentPhraseMatcher:
 
         text_lower = text.lower()
 
-        # Basic phrase type detection
         if '?' in text or any(word in text_lower for word in ['how', 'what', 'where']):
             analysis['phrase_type'] = 'question'
         elif any(word in text_lower for word in ['please', 'can you']):
@@ -187,7 +189,6 @@ class IntelligentPhraseMatcher:
         elif any(word in text_lower for word in self.phrase_patterns['greeting']):
             analysis['phrase_type'] = 'greeting'
 
-        # Basic sentiment
         if any(word in text_lower for word in ['happy', 'good', 'great']):
             analysis['sentiment'] = 'positive'
         elif any(word in text_lower for word in ['sad', 'bad', 'angry']):
@@ -200,13 +201,12 @@ class IntelligentPhraseMatcher:
         Intelligently segment a phrase into meaningful chunks for sign language.
 
         Args:
-            text (str): Input text to segment
+            text: Input text to segment
 
         Returns:
             List of phrase segments
         """
         if not self.nlp:
-            # Simple fallback segmentation
             return self._simple_segmentation(text)
 
         doc = self.nlp(text)
@@ -214,9 +214,8 @@ class IntelligentPhraseMatcher:
         current_segment = []
 
         for token in doc:
-            # Start a new segment for certain conditions
             if (token.pos_ in ['VERB'] and current_segment and
-                any(t.pos_ in ['NOUN', 'PROPN'] for t in current_segment)):
+                    any(t.pos_ in ['NOUN', 'PROPN'] for t in current_segment)):
                 segments.append(' '.join([t.text for t in current_segment]))
                 current_segment = [token]
             elif token.pos_ in ['PUNCT'] and token.text in ['.', '!', '?']:
@@ -233,46 +232,38 @@ class IntelligentPhraseMatcher:
 
     def _simple_segmentation(self, text: str) -> List[str]:
         """Simple segmentation fallback."""
-        # Split by punctuation and common phrase boundaries
         segments = re.split(r'[.!?;,]|\s+and\s+|\s+then\s+', text)
         return [seg.strip() for seg in segments if seg.strip()]
 
     def match_phrase_intelligently(self, text: str, use_semantic: bool = True,
-                                 threshold: float = 0.6) -> PhraseMatch:
+                                   threshold: float = 0.6) -> PhraseMatch:
         """
         Perform intelligent phrase matching with context awareness.
 
         Args:
-            text (str): Input phrase to match
-            use_semantic (bool): Whether to use semantic matching
-            threshold (float): Semantic similarity threshold
+            text: Input phrase to match
+            use_semantic: Whether to use semantic matching
+            threshold: Semantic similarity threshold
 
         Returns:
             PhraseMatch object with comprehensive results
         """
-        # Analyze the phrase first
         analysis = self.analyze_phrase(text)
-
-        # Segment the phrase
         segments = self.segment_phrase(text)
 
         all_matches = []
         total_confidence = 0
 
         for segment in segments:
-            # For each segment, find the best matches
             segment_matches = self._match_segment(segment, use_semantic, threshold)
             all_matches.extend(segment_matches)
 
-            # Calculate confidence based on match quality
             if segment_matches:
-                segment_confidence = sum(match['confidence'] for match in segment_matches) / len(segment_matches)
+                segment_confidence = sum(m['confidence'] for m in segment_matches) / len(segment_matches)
                 total_confidence += segment_confidence
 
-        # Calculate overall confidence
         overall_confidence = total_confidence / len(segments) if segments else 0
 
-        # Optimize sign order for sign language grammar
         optimized_matches = self._optimize_sign_order(all_matches, analysis)
 
         return PhraseMatch(
@@ -287,37 +278,34 @@ class IntelligentPhraseMatcher:
 
     def _match_segment(self, segment: str, use_semantic: bool, threshold: float) -> List[Dict[str, Any]]:
         """Match a single segment to signs."""
-        # Direct matching without creating new SignMatcher instance
         tokens = segment.lower().split()
         matches = []
 
         for token in tokens:
             # Try exact match first
             if token in self.gloss_dict:
-                match = {
+                matches.append({
                     'word': token,
                     'sign_data': self.gloss_dict[token],
                     'match_type': 'exact',
                     'confidence': 1.0
-                }
-                matches.append(match)
+                })
             else:
-                # Try synonym matching
+                # Try synonym matching via target_words
                 synonym_found = False
                 for word, synonyms in self.target_words.items():
                     if token in synonyms and word in self.gloss_dict:
-                        match = {
+                        matches.append({
                             'word': token,
                             'sign_data': self.gloss_dict[word],
                             'match_type': 'synonym',
                             'confidence': 0.9
-                        }
-                        matches.append(match)
+                        })
                         synonym_found = True
                         break
 
-                # Try semantic matching if enabled and no synonym found
-                if not synonym_found and use_semantic and hasattr(self, 'matcher') and self.matcher:
+                # Try semantic matching via injected SignMatcher
+                if not synonym_found and use_semantic and self.matcher:
                     semantic_match = self.matcher.semantic_match(token, threshold)
                     if semantic_match:
                         matches.append(semantic_match)
@@ -327,6 +315,7 @@ class IntelligentPhraseMatcher:
     def _optimize_sign_order(self, matches: List[Dict[str, Any]], analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Optimize the order of signs based on ASL/Auslan grammar rules.
+        Generally: Time -> Topic -> Comment -> Question marker
 
         Args:
             matches: List of matched signs
@@ -338,34 +327,36 @@ class IntelligentPhraseMatcher:
         if not matches:
             return matches
 
-        # Basic ASL/Auslan grammar: Topic-Comment structure
-        # Generally: Time -> Topic -> Comment -> Question marker
-
         priority_order = {
-            'temporal': 0,    # time words first
-            'greeting': 1,    # greetings early
-            'fitness_core': 2,  # main fitness concepts
-            'basic_needs': 3,   # basic needs
-            'actions': 4,       # action verbs
-            'emotions': 5,      # emotional states
-            'descriptive': 6,   # descriptors
-            'fitness_anatomy': 7,  # body parts
-            'places': 8,        # locations
-            'fitness_equipment': 9  # equipment last
+            'time': 0,
+            'temporal': 0,
+            'greeting': 1,
+            'fitness_core': 2,
+            'basic_needs': 3,
+            'actions': 4,
+            'emotions': 5,
+            'descriptive': 6,
+            'fitness_anatomy': 7,
+            'fitness_cardio': 7,
+            'fitness_health': 7,
+            'places': 8,
+            'social': 8,
+            'communication': 8,
+            'fitness_actions': 9,
+            'fitness_equipment': 10
         }
 
-        # Sort matches by category priority and confidence
         def sort_key(match):
-            category = match['sign_data'].get('category', 'unknown')
+            sign_data = match.get('sign_data') or {}
+            category = sign_data.get('category', 'unknown')
             priority = priority_order.get(category, 10)
             confidence = match.get('confidence', 0)
-            return (priority, -confidence)  # negative confidence for descending order
+            return (priority, -confidence)
 
         sorted_matches = sorted(matches, key=sort_key)
 
-        # Additional grammar-based reordering for questions
+        # For questions, move wh-words to the end (Auslan structure)
         if analysis['phrase_type'] == 'question':
-            # Move question words to the end (ASL structure)
             question_words = []
             other_words = []
 
@@ -385,8 +376,8 @@ class IntelligentPhraseMatcher:
         Get intelligent phrase suggestions based on partial input.
 
         Args:
-            partial_text (str): Partial text input
-            limit (int): Maximum number of suggestions
+            partial_text: Partial text input
+            limit: Maximum number of suggestions
 
         Returns:
             List of suggested phrases
@@ -397,7 +388,6 @@ class IntelligentPhraseMatcher:
         if len(text_lower) < 2:
             return suggestions
 
-        # Common phrase templates
         templates = [
             "I need {word}",
             "Let's {verb}",
@@ -411,13 +401,12 @@ class IntelligentPhraseMatcher:
             "Thank you for {noun}"
         ]
 
-        # Context-aware suggestions based on available signs
         available_words = list(self.gloss_dict.keys())
 
         for template in templates:
             if '{verb}' in template:
                 verbs = [word for word in available_words
-                        if self.gloss_dict[word].get('category') in ['actions', 'fitness_actions']]
+                         if self.gloss_dict[word].get('category') in ['actions', 'fitness_actions']]
                 for verb in verbs[:3]:
                     suggestion = template.replace('{verb}', verb)
                     if text_lower in suggestion.lower():
@@ -425,7 +414,7 @@ class IntelligentPhraseMatcher:
 
             elif '{emotion}' in template:
                 emotions = [word for word in available_words
-                           if self.gloss_dict[word].get('category') == 'emotions']
+                            if self.gloss_dict[word].get('category') == 'emotions']
                 for emotion in emotions[:2]:
                     suggestion = template.replace('{emotion}', emotion)
                     if text_lower in suggestion.lower():
@@ -433,7 +422,7 @@ class IntelligentPhraseMatcher:
 
             elif '{noun}' in template:
                 nouns = [word for word in available_words
-                        if self.gloss_dict[word].get('category') in ['basic_needs', 'places']]
+                         if self.gloss_dict[word].get('category') in ['basic_needs', 'places']]
                 for noun in nouns[:2]:
                     suggestion = template.replace('{noun}', noun)
                     if text_lower in suggestion.lower():
