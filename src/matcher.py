@@ -46,7 +46,7 @@ def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 class SignMatcher:
     """Main matching engine that combines multiple matching strategies.
 
-    Pipeline order: exact → fuzzy → synonym → semantic → LLM fallback
+    Pipeline order: exact -> fuzzy -> synonym -> semantic -> LLM fallback
     """
 
     def __init__(
@@ -414,11 +414,12 @@ class SignMatcher:
         token: str,
         use_semantic: bool = True,
         threshold: float = 0.6,
+        use_synonym: bool = True,
         use_llm: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """Match a single token using all available strategies.
 
-        Pipeline: exact → fuzzy → synonym → semantic → LLM
+        Pipeline: exact -> fuzzy -> synonym -> semantic -> LLM
         """
         result = self.exact_match(token)
         if result:
@@ -428,10 +429,13 @@ class SignMatcher:
         if result:
             return result
 
-        result = self.synonym_match(token)
-        if result:
-            return result
+        # Try synonym match (if enabled)
+        if use_synonym:
+            result = self.synonym_match(token)
+            if result:
+                return result
 
+        # Try semantic match if available and enabled
         if use_semantic and SEMANTIC_AVAILABLE:
             result = self.semantic_match(token, threshold=threshold)
             if result:
@@ -449,6 +453,7 @@ class SignMatcher:
         tokens: List[str],
         use_semantic: bool = True,
         threshold: float = 0.6,
+        use_synonym: bool = True,
         use_llm: bool = False,
     ) -> List[Dict[str, Any]]:
         """Match multiple tokens with n-gram phrase detection."""
@@ -460,26 +465,50 @@ class SignMatcher:
             matched_phrase = False
             for window in range(min(self.max_phrase_len, n - i), 1, -1):
                 phrase = " ".join(tokens[i : i + window]).lower()
-                if phrase in self.phrase_to_main:
-                    main_word = self.phrase_to_main[phrase]
-                    results.append(
-                        {
-                            "word": main_word,
-                            "match_type": "synonym" if main_word != phrase else "exact",
-                            "matched_synonym": phrase if main_word != phrase else None,
-                            "confidence": 0.95 if main_word != phrase else 1.0,
-                            "sign_data": self.gloss_dict.get(main_word),
-                        }
-                    )
-                    i += window
-                    matched_phrase = True
-                    break
+                if use_synonym:
+                    if phrase in self.phrase_to_main:
+                        main_word = self.phrase_to_main[phrase]
+                        results.append(
+                            {
+                                "word": main_word,
+                                "match_type": "synonym"
+                                if main_word != phrase
+                                else "exact",
+                                "matched_synonym": phrase
+                                if main_word != phrase
+                                else None,
+                                "confidence": 0.95 if main_word != phrase else 1.0,
+                                "sign_data": self.gloss_dict.get(main_word),
+                            }
+                        )
+                        i += window
+                        matched_phrase = True
+                        break
+                else:
+                    # When synonym matching is disabled, only allow exact multi-word phrase present in dictionary
+                    if phrase in self.gloss_dict:
+                        results.append(
+                            {
+                                "word": phrase,
+                                "match_type": "exact",
+                                "matched_synonym": None,
+                                "confidence": 1.0,
+                                "sign_data": self.gloss_dict.get(phrase),
+                            }
+                        )
+                        i += window
+                        matched_phrase = True
+                        break
 
             if matched_phrase:
                 continue
 
             match_result = self.match_token(
-                tokens[i], use_semantic, threshold, use_llm=use_llm
+                tokens[i],
+                use_semantic,
+                threshold,
+                use_synonym=use_synonym,
+                use_llm=use_llm,
             )
             if match_result:
                 results.append(match_result)
@@ -501,11 +530,16 @@ class SignMatcher:
         tokens: List[str],
         use_semantic: bool = True,
         threshold: float = 0.6,
+        use_synonym: bool = True,
         use_llm: bool = False,
     ) -> Dict[str, Any]:
         """Calculate coverage statistics for a list of tokens."""
         results = self.match_tokens(
-            tokens, use_semantic=use_semantic, threshold=threshold, use_llm=use_llm
+            tokens,
+            use_semantic=use_semantic,
+            threshold=threshold,
+            use_synonym=use_synonym,
+            use_llm=use_llm,
         )
         total = len(tokens)
         matched = sum(1 for r in results if r["match_type"] != "no_match")

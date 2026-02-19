@@ -138,11 +138,12 @@ class AuslanSignSystem:
         logger.info("Auslan AI v2.0 initialized")
 
         if not self.matcher or not getattr(self.matcher, "semantic_model", None):
-            logger.warning(
-                "Semantic matching not available. Install sentence-transformers for full functionality."
+            print(
+                "WARNING:  Note: Semantic matching not available. "
+                "Install sentence-transformers for full functionality."
             )
         else:
-            logger.info("Semantic similarity available")
+            print("OK: Semantic similarity (DistilBERT) available")
 
     def process_input(
         self,
@@ -152,6 +153,7 @@ class AuslanSignSystem:
         semantic_threshold: float = None,
         use_stemming: bool = False,
         use_intelligent_matching: bool = True,
+        use_synonym: bool = True,
         use_llm: bool = False,
     ) -> Dict[str, Any]:
         """Process user input text with NLP analysis and sign matching."""
@@ -167,8 +169,9 @@ class AuslanSignSystem:
             logger.warning("NLP analysis failed: %s", e)
             nlp_analysis = None
 
-        # Try intelligent matching first
-        if use_intelligent_matching and self.phrase_matcher:
+        # Try intelligent matching first, fallback to basic matching
+        # If synonym matching is disabled, skip intelligent phrase matching (it relies on synonyms)
+        if use_intelligent_matching and use_synonym and self.phrase_matcher:
             try:
                 phrase_match = self.phrase_matcher.match_phrase_intelligently(
                     text, use_semantic=use_semantic, threshold=semantic_threshold
@@ -232,7 +235,7 @@ class AuslanSignSystem:
                 logger.warning("Intelligent phrase matching failed: %s", e)
                 use_intelligent_matching = False
 
-        # Fallback to basic token matching
+        # Fallback to basic matching if intelligent matching failed or disabled
         if self.matcher:
             tokens = self.preprocessor.preprocess(
                 text, remove_stops=remove_stops, use_stemming=use_stemming
@@ -241,12 +244,14 @@ class AuslanSignSystem:
                 tokens,
                 use_semantic=use_semantic,
                 threshold=semantic_threshold,
+                use_synonym=use_synonym,
                 use_llm=use_llm,
             )
             coverage_stats = self.matcher.get_coverage_stats(
                 tokens,
                 use_semantic=use_semantic,
                 threshold=semantic_threshold,
+                use_synonym=use_synonym,
                 use_llm=use_llm,
             )
             successful_matches = [
@@ -422,6 +427,7 @@ class AuslanSignSystem:
         use_semantic: bool = True,
         semantic_threshold: float = None,
         use_stemming: bool = False,
+        use_synonym: bool = True,
     ) -> Dict[str, Any]:
         """Evaluate the system on a batch of test texts."""
         if semantic_threshold is None:
@@ -440,13 +446,28 @@ class AuslanSignSystem:
                 use_semantic=use_semantic,
                 semantic_threshold=semantic_threshold,
                 use_stemming=use_stemming,
+                use_synonym=use_synonym,
             )
             all_results.append(results)
             total_coverage += results["coverage_stats"]["coverage_rate"]
+
             print(
                 f'{i}. "{text}" -> {results["signs_found"]}/{results["total_tokens"]} signs '
                 f"({results['coverage_stats']['coverage_rate']:.1%} coverage)"
             )
+            if results["successful_matches"]:
+                matched_words = [
+                    m.get("matched_synonym", m["word"])
+                    for m in results["successful_matches"]
+                ]
+                match_types = [m["match_type"] for m in results["successful_matches"]]
+                pairs = []
+                for m in results["successful_matches"]:
+                    shown_word = m.get("matched_synonym", m["word"])
+                    pairs.append(f"{shown_word} ({m['match_type']})")
+                print(f"   Matched words: {', '.join(matched_words)}")
+                print(f"   Match types: {', '.join(match_types)}")
+                print(f"   Matched detail: {', '.join(pairs)}")
 
         average_coverage = total_coverage / len(test_texts) if test_texts else 0
 
