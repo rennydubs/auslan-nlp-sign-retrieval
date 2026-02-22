@@ -372,7 +372,7 @@ class AuslanSignSystem:
         print("Enter text to find corresponding Auslan signs.")
         print("Commands: 'quit' to exit")
         print(
-            f"Options: --no-stops, --no-semantic, --stem, --thresh={config.DEFAULT_SEMANTIC_THRESHOLD}"
+            f"Options: --no-stops, --no-semantic, --stem, --use-llm, --thresh={config.DEFAULT_SEMANTIC_THRESHOLD}"
         )
         print("-" * 60)
 
@@ -388,6 +388,7 @@ class AuslanSignSystem:
                 remove_stops = "--no-stops" in user_input
                 use_semantic = "--no-semantic" not in user_input
                 use_stemming = "--stem" in user_input
+                use_llm = "--use-llm" in user_input
                 threshold = config.DEFAULT_SEMANTIC_THRESHOLD
                 m = re.search(r"--thresh=([0-9]*\.?[0-9]+)", user_input)
                 if m:
@@ -400,6 +401,7 @@ class AuslanSignSystem:
                     user_input.replace("--no-stops", "")
                     .replace("--no-semantic", "")
                     .replace("--stem", "")
+                    .replace("--use-llm", "")
                 )
                 text = re.sub(r"--thresh=([0-9]*\.?[0-9]+)", "", text).strip()
                 if not text:
@@ -411,6 +413,7 @@ class AuslanSignSystem:
                     use_semantic=use_semantic,
                     semantic_threshold=threshold,
                     use_stemming=use_stemming,
+                    use_llm=use_llm,
                 )
                 self.display_results(results)
 
@@ -428,6 +431,7 @@ class AuslanSignSystem:
         semantic_threshold: float = None,
         use_stemming: bool = False,
         use_synonym: bool = True,
+        use_llm: bool = False,
     ) -> Dict[str, Any]:
         """Evaluate the system on a batch of test texts."""
         if semantic_threshold is None:
@@ -447,6 +451,7 @@ class AuslanSignSystem:
                 semantic_threshold=semantic_threshold,
                 use_stemming=use_stemming,
                 use_synonym=use_synonym,
+                use_llm=use_llm,
             )
             all_results.append(results)
             total_coverage += results["coverage_stats"]["coverage_rate"]
@@ -501,6 +506,7 @@ def main():
             remove_stops = "--no-stops" in extra_args
             use_semantic = "--no-semantic" not in extra_args
             use_stemming = "--stem" in extra_args
+            use_llm = "--use-llm" in extra_args
             threshold = config.DEFAULT_SEMANTIC_THRESHOLD
             m = re.search(r"--thresh=([0-9]*\.?[0-9]+)", extra_args)
             if m:
@@ -516,6 +522,7 @@ def main():
                 use_semantic=use_semantic,
                 semantic_threshold=threshold,
                 use_stemming=use_stemming,
+                use_llm=use_llm,
             )
             print(f"\nOverall average coverage: {evaluation['average_coverage']:.1%}")
 
@@ -527,6 +534,7 @@ def main():
             remove_stops = "--no-stops" in raw_input
             use_semantic = "--no-semantic" not in raw_input
             use_stemming = "--stem" in raw_input
+            use_llm = "--use-llm" in raw_input
             threshold = config.DEFAULT_SEMANTIC_THRESHOLD
             m = re.search(r"--thresh=([0-9]*\.?[0-9]+)", raw_input)
             if m:
@@ -538,6 +546,7 @@ def main():
                 raw_input.replace("--no-stops", "")
                 .replace("--no-semantic", "")
                 .replace("--stem", "")
+                .replace("--use-llm", "")
             )
             text = re.sub(r"--thresh=([0-9]*\.?[0-9]+)", "", text).strip()
 
@@ -547,6 +556,7 @@ def main():
                 use_semantic=use_semantic,
                 semantic_threshold=threshold,
                 use_stemming=use_stemming,
+                use_llm=use_llm,
             )
             system.display_results(results)
 
