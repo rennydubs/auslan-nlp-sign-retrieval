@@ -6,7 +6,7 @@ export interface SignData {
   gloss: string
   id_gloss?: string
   category: string
-  video_url: string
+  video_url: string | null
   video_local?: string
   description: string
   keywords?: string[]

@@ -159,15 +159,10 @@ export function SignCard({ match, index = 0 }: SignCardProps) {
         </span>
       </div>
 
-      {/* Video */}
-      {sign?.video_url ? (
+      {/* Video — only rendered when a URL exists */}
+      {sign?.video_url && (
         <div className="px-3 pt-3">
           <VideoPlayer src={videoUrl(sign.video_url)} gloss={sign.gloss ?? match.word} />
-        </div>
-      ) : (
-        <div className="mx-3 mt-3 flex h-36 items-center justify-center rounded-xl bg-zinc-800/40 text-sm text-zinc-500">
-          <VideoOff className="mr-2 h-4 w-4" />
-          No video available
         </div>
       )}
 

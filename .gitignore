@@ -10,7 +10,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Python build artifacts (not frontend/lib/)
+/lib/
 lib64/
 parts/
 sdist/
@@ -57,9 +58,14 @@ media/scraped_videos/
 data/gloss/auslan_dictionary_local.json
 data/gloss/auslan_dictionary_backup.json
 
+# Scraper intermediate files
+data/gloss/signbank_scraped.json
+data/gloss/signbank_with_urls.json
+
 # Temporary files
 *.tmp
 *.temp
+.cache/
 
 # Claude Code
 CLAUDE.md
