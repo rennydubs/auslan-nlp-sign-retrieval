@@ -772,19 +772,26 @@ def scrape(
 
         entry = parse_sign_page(url, resp.text)
         if entry:
-            # Download the video and rewrite video_url to the local path
+            # Download the video; keep the remote URL so clones work without videos
             if download_videos:
                 for key, data in entry.items():
                     remote_url = data.get("video_url", "")
                     if remote_url and remote_url.startswith("http"):
+                        data["video_url_remote"] = remote_url
                         local_path = download_video(session, remote_url, key, delay)
                         if local_path:
                             data["video_url"] = local_path
+                            data["video_local"] = local_path
                         else:
                             logger.warning(
                                 "Video download failed for %s — keeping remote URL.",
                                 key,
                             )
+            else:
+                for key, data in entry.items():
+                    remote_url = data.get("video_url", "")
+                    if remote_url and remote_url.startswith("http"):
+                        data["video_url_remote"] = remote_url
             scraped.update(entry)
         else:
             logger.debug("No usable data extracted from %s", url)

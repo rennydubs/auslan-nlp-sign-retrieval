@@ -51,6 +51,11 @@ media/videos/*.avi
 media/images/*.png
 media/images/*.jpg
 media/images/*.jpeg
+media/scraped_videos/
+
+# Local dictionary with video paths (not for repo)
+data/gloss/auslan_dictionary_local.json
+data/gloss/auslan_dictionary_backup.json
 
 # Temporary files
 *.tmp
